@@ -1,3 +1,0 @@
-# List evidence IDs that may continue to influence specs after the recency window expires.
-# Example:
-# EVD-0001 YYYY-MM-DD critical:Reason evidence must persist beyond recency window

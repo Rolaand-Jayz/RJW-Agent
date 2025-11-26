@@ -1,37 +1,13 @@
-__pycache__/
-*.py[cod]
-*$py.class
-
-.venv/
-venv/
-ENV/
-env/
-.env
-.env.*
-
-.mypy_cache/
-.pytest_cache/
-.coverage
-.coverage.*
-coverage.xml
-htmlcov/
-.cache/
-
-build/
-dist/
-*.egg-info/
-
+# Editor/OS files
 .idea/
 .vscode/
-.ropeproject/
 *.swp
 *.swo
-
 .DS_Store
 Thumbs.db
 
+# Logs
 *.log
 
-
-#Ignore vscode AI rules
-
+# Node.js (for markdownlint)
+node_modules/

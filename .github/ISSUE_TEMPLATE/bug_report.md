@@ -1,17 +1,17 @@
 ---
-name: Bug report
-about: Create a report to help us improve
-labels: bug
+name: Issue report
+about: Report an issue with the methodology documentation
+labels: documentation
 ---
 
-**Describe the bug**
+**Describe the issue**
 
-**To Reproduce**
+What problem did you find with the methodology documentation?
 
-**Expected behavior**
+**Location**
 
-**Screenshots / logs**
+Which document(s) is affected?
 
-**Environment (please complete the following information):**
-- OS: 
-- Python: 
+**Suggested improvement**
+
+How should the documentation be corrected or clarified?
