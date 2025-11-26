@@ -48,7 +48,7 @@ Track documentation gaps and ensure documentation updates ship alongside code ch
 2. **Blocking Gaps:** Mark gaps as blocking if they prevent users from successfully using the product.
 3. **Review Cadence:** Review this log at each phase gate and before releases.
 4. **Resolution:** Update the status and reference the change log entry when gaps are resolved.
-5. **Integration Guard:** Use `living_docs_guard.py` to prevent merges with unresolved blocking gaps.
+5. **Integration Guard:** Consider implementing a CI guard to prevent merges with unresolved blocking gaps (see `METHOD-0004` for reference).
 
 ## Cross-References
 
