@@ -212,7 +212,7 @@ START
 Critical Risk Path
 ```
 
-## 4. Human-Centered Artifact Design
+## 4. Human-Centered Artefact Design
 
 ### Progressive Disclosure Structure
 
