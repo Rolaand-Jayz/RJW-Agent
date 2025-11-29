@@ -1,6 +1,6 @@
 # METHOD-0007 — Streamlined Operations and Human-Friendly Design
 
-This document refines the RJW-IDD methodology to improve speed, reduce overhead, and enhance human accessibility without sacrificing auditability. It introduces parallel execution paths, risk-proportionate process weight, and human-centered artifact design.
+This document refines the RJW-IDD methodology to improve speed, reduce overhead, and enhance human accessibility without sacrificing auditability. It introduces parallel execution paths, risk-proportionate process weight, and human-centered artefact design.
 
 ## 1. Purpose
 
@@ -216,7 +216,7 @@ Critical Risk Path
 
 ### Progressive Disclosure Structure
 
-Restructure all methodology artifacts to front-load essential information:
+Restructure all methodology artefacts to front-load essential information:
 
 ```markdown
 # [Document Title]
@@ -253,7 +253,7 @@ Replace verbose change log entries with scannable format:
 ```markdown
 | ID | Date | Risk | Summary | Links |
 |----|------|------|---------|-------|
-| 2024-03-27-01 | 2024-03-27 | High | Anchor governance artifacts | [DEC-0001] [audit:1] |
+| 2024-03-27-01 | 2024-03-27 | High | Anchor governance artefacts | [DEC-0001] [audit:1] |
 ```
 
 Detailed description moves to linked decision record.
@@ -299,7 +299,7 @@ Provide a lightweight decision template for low/medium risk changes:
 - Option B — rejected because [one line]
 
 ## Impact
-- Changes: [list affected artifacts]
+- Changes: [list affected artefacts]
 - Risks: [key risks and mitigations]
 
 ## Verification
@@ -337,7 +337,7 @@ Replace manual steps with automated defaults where possible:
 | Manual Step | Automated Alternative |
 |-------------|----------------------|
 | Create change log entry | Auto-generate from commit + template |
-| Assign artifact IDs | Auto-increment from registry |
+| Assign artefact IDs | Auto-increment from registry |
 | Link cross-references | Auto-link on save |
 | Check format compliance | Pre-commit hooks |
 | Verify ID uniqueness | CI validation |
@@ -373,8 +373,8 @@ Automate verification that currently requires manual checking:
 repos:
   - repo: local
     hooks:
-      - id: check-artifact-ids
-        name: Verify artifact ID format and uniqueness
+      - id: check-artefact-ids
+        name: Verify artefact ID format and uniqueness
         entry: scripts/validate_ids.py
         language: python
         files: '\.(md|json|csv)$'

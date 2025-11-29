@@ -151,7 +151,7 @@ core_contract:
   quality:
     - Verify outputs before declaring completion
     - Follow established patterns unless deviation is justified
-    - Maintain consistency with existing artifacts
+    - Maintain consistency with existing artefacts
     - Document deviations from standard approach
 
   safety:
@@ -223,11 +223,11 @@ Replace gate-only verification with continuous automated checks to catch issues 
 **Process Verification (every action):**
 
 - Change log entry present and complete
-- Linked artifacts exist and are consistent
+- Linked artefacts exist and are consistent
 - Required approvals obtained for trust level
 - Timing within expected bounds
 
-**Output Verification (every artifact):**
+**Output Verification (every artefact):**
 
 - ID format follows scheme (`REQ-####`, `SPEC-####`, etc.)
 - Cross-references resolve correctly

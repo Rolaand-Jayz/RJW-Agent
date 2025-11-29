@@ -15,7 +15,7 @@
 
 ## Impact
 
-- **Changes:** [list affected artifacts, components, or docs]
+- **Changes:** [list affected artefacts, components, or docs]
 - **Risks:** [key risks and how they're mitigated]
 
 ## Verification
