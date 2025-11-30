@@ -1,6 +1,6 @@
 # Rolaand Jayz Wayz – Coding with Natural Language: Intelligence Driven Development (RJW-IDD)
 
-> **A disciplined methodology for AI-assisted software development** — no code, just the pure method and templates for the artifacts you create when applying it.
+> **A disciplined methodology for AI-assisted software development** — no code, just the pure method and templates for the artefacts you create when applying it.
 
 ## What is RJW-IDD?
 
@@ -32,6 +32,13 @@ rjw-idd-methodology/
 │   ├── testing/             # Test case templates
 │   ├── documentation/       # Standards, runbooks, guides
 │   └── governance/          # Change logs, audit logs, ledgers
+│   ├── METHOD-0005-operations-production-support.md
+│   ├── METHOD-0006-agent-trust-and-autonomy.md
+│   └── METHOD-0007-streamlined-operations.md
+├── templates/               # Artifact templates
+│   ├── PROJECT-DEC-template.md
+│   ├── DEC-LITE-template.md
+│   └── AGENT-TRUST-template.md
 ├── addons/                  # Domain-specific methodology extensions
 │   ├── 3d-game-core/
 │   └── video-ai-enhancer/
@@ -84,6 +91,24 @@ Guidance for post-deployment phases including:
 - Incident response
 - User feedback collection
 
+### 6. Agent Trust and Autonomy (`METHOD-0006`)
+
+Framework for building and managing trust in AI agents:
+
+- **Trust Ladder Model** — Four levels from Supervised to Trusted Partner
+- **Behavioral Contracts** — Explicit commitments agents make for transparency, quality, and safety
+- **Continuous Verification** — Automated checks that build trust evidence
+- **Graduated Response Protocol** — Proportionate responses to trust violations
+
+### 7. Streamlined Operations (`METHOD-0007`)
+
+Refinements for speed and human-friendliness:
+
+- **Parallel-First Architecture** — Maximize concurrent work where dependencies allow
+- **Risk-Proportionate Process** — Simple changes deserve simple processes
+- **Human-Centered Artifacts** — Progressive disclosure and visual checklists
+- **Quick-Start Pathways** — Fast tracks for common scenarios
+
 ## Templates
 
 Copy these templates into your project when applying RJW-IDD:
@@ -102,6 +127,11 @@ Copy these templates into your project when applying RJW-IDD:
 | **Governance** | `templates/governance/LIVING-DOCS-RECONCILIATION-template.md` | Documentation debt tracking |
 
 See `rjw-idd-methodology/templates/README.md` for detailed usage instructions.
+| Template | Purpose |
+|----------|---------|
+| `rjw-idd-methodology/templates/PROJECT-DEC-template.md` | Full decision record for High/Critical risk choices |
+| `rjw-idd-methodology/templates/DEC-LITE-template.md` | Lightweight decision record for Low/Medium risk choices |
+| `rjw-idd-methodology/templates/AGENT-TRUST-template.md` | Document agent trust level changes |
 
 ## Using This Methodology
 
