@@ -2,6 +2,71 @@
 
 Use these checklists to force the same lifecycle run that originally created RJW-IDD. Every box must be checked before advancing to the next phase. Record completion in `docs/change-log.md` and append the relevant `DEC-####` entry each time you revisit the method.
 
+> **Quick Reference:** For risk-proportionate process selection, see [Quick Start — Select Your Pathway](#quick-start--select-your-pathway) before starting. Not all changes require the full checklist—use the appropriate pathway for your risk level.
+
+## Quick Start — Select Your Pathway
+
+Classify your change risk level first, then follow the appropriate checklist:
+
+```text
+Does this change behavior?
+  │
+  No ──► Minimal Risk Path (Section A)
+  │
+  Yes
+  │
+Is the change easily reversible?
+  │
+  Yes ──► Low Risk Path (Section B)
+  │
+  No
+  │
+Does it affect multiple components or external interfaces?
+  │
+  No ──► Medium Risk Path (Section C)
+  │
+  Yes
+  │
+Does it involve security, data integrity, or availability?
+  │
+  No ──► High Risk Path (Full Checklists Below)
+  │
+  Yes ──► Critical Risk Path (Full Checklists + Security Review)
+```
+
+### Section A — Minimal Risk Path (5 min)
+
+For non-behavioral changes (typo fixes, formatting, comment updates):
+
+- [ ] Commit with message: `docs: [brief description]`
+- [ ] Automated lint/format check passes
+- [ ] Merge on pass
+
+### Section B — Low Risk Path (30 min)
+
+For additive, easily reversible changes (new tests, new docs, config defaults):
+
+- [ ] Automated checks pass
+- [ ] Change log entry added (simplified format)
+- [ ] Artefact IDs follow scheme
+- [ ] Optional peer review
+
+### Section C — Medium Risk Path (2 hours)
+
+For behavior changes within a single component (bug fixes, refactors, internal API changes):
+
+- [ ] Risk classification documented in commit
+- [ ] Full automated verification suite passes
+- [ ] Peer review completed
+- [ ] Tests cover changes
+- [ ] Documentation updated
+- [ ] Standard change log entry added
+- [ ] One reviewer sign-off obtained
+
+---
+
+**For High/Critical Risk changes**, proceed with the full checklists below.
+
 ## Phase 0 — Governance Setup
 - [ ] `docs/decisions/` directory exists with sequential `DEC-####.md` records; new work starts by drafting a decision stub.
 - [ ] `docs/change-log.md` initialised and ready to track `change-YYYYMMDD-##` entries.
@@ -64,3 +129,40 @@ Use these checklists to force the same lifecycle run that originally created RJW
 - [ ] Change Log verification column always references tangible artefacts (validator outputs, logs, receipts).
 
 Use this checklist pack as a gatekeeper. If any box stays unchecked, loop back, capture a new decision, or schedule additional Discovery work before progressing.
+
+## Parallel Execution (High/Critical Risk Only)
+
+For High/Critical risk changes, maximize efficiency by running independent tracks concurrently:
+
+**May run in parallel:**
+
+- Functional spec ↔ Quality spec ↔ Security spec ↔ Ops spec
+- Unit tests ↔ Integration tests ↔ Documentation updates
+- Different feature implementations (non-overlapping scope)
+
+**Require sync points:**
+
+| Sync Point | Purpose | Duration |
+|------------|---------|----------|
+| Post-Research | Align findings before spec work | 30 min |
+| Pre-Implementation | Confirm specs compatible | 1 hour |
+| Pre-Deploy | Verify all streams complete | 15 min |
+
+See `operations/METHOD-0007-streamlined-operations.md` for the full parallel-first architecture.
+
+## Agent Trust Integration
+
+When AI agents execute these checklists, apply trust-level constraints from `operations/METHOD-0006-agent-trust-and-autonomy.md`:
+
+| Trust Level | Pathway Access |
+|-------------|----------------|
+| Level 0 | Minimal Risk only; all others require approval |
+| Level 1 | Minimal/Low Risk; Medium+ require human co-pilot |
+| Level 2 | Minimal/Low/Medium Risk; High+ require approval |
+| Level 3 | All pathways; serves as approver for others |
+
+## Related Documentation
+
+- `operations/METHOD-0006-agent-trust-and-autonomy.md` — Agent trust framework
+- `operations/METHOD-0007-streamlined-operations.md` — Full streamlining details
+- `templates/DEC-LITE-template.md` — Lightweight decision template for Low/Medium risk

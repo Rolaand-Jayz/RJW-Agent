@@ -2,7 +2,10 @@
 
 This playbook turns the RJW-IDD method pack into concrete steps for teams working with AI coding agents. Follow it to reproduce the evidence → spec → implementation loop captured in the scaffold.
 
-## 0. Assign Roles
+> **Quick Start:** Classify your change risk level using [METHOD-0002 Quick Start](#streamlined-workflow-selection) before proceeding. Low-risk changes can skip directly to [Streamlined Pathways](#streamlined-pathways).
+
+## 0. Assign Roles and Trust Levels
+
 Record role owners in `rjw-idd-methodology/governance/METHOD-0003-role-handbook.md` and the active row in `docs/change-log.md`.
 
 | Role | Responsibilities | Companion Artefacts |
@@ -12,7 +15,67 @@ Record role owners in `rjw-idd-methodology/governance/METHOD-0003-role-handbook.
 | Doc Steward | Updates living documentation and verifies Change Log entries. | `docs/standards/DOC-0006`, `docs/runbooks/` |
 | Governance Sentinel | Runs validators, records audits, blocks releases missing artefacts. | `scripts/validate_ids.py`, `logs/LOG-0001-stage-audits.md` |
 
-## 1. Inputs Before Work
+### Agent Trust Levels
+
+Before starting work, confirm the agent's trust level per `METHOD-0006`:
+
+| Trust Level | Autonomy | Process Access |
+|-------------|----------|----------------|
+| Level 0 (Supervised) | All actions require human approval | Minimal Risk path only |
+| Level 1 (Guided) | Pre-approved categories proceed automatically | Minimal/Low Risk paths |
+| Level 2 (Autonomous) | Operates independently with post-hoc review | Minimal/Low/Medium Risk paths |
+| Level 3 (Trusted Partner) | Participates in planning and prioritization | All paths; can approve others |
+
+## Streamlined Workflow Selection
+
+**Classify risk first** — not all changes require the full workflow:
+
+| Risk Level | Examples | Pathway |
+|------------|----------|---------|
+| **Minimal** | Doc typos, formatting, comments | Commit → Auto-verify → Merge |
+| **Low** | New tests, new docs, config defaults | Commit → Verify → Change log → Merge |
+| **Medium** | Bug fixes, refactors, internal API changes | Full verification + peer review |
+| **High** | Feature additions, external API changes | Full Discovery→Execution loop |
+| **Critical** | Security, data, availability changes | Full loop + Security review |
+
+For Minimal/Low/Medium risk, use the [Streamlined Pathways](#streamlined-pathways) below.
+
+## Streamlined Pathways
+
+### Minimal Risk (5 min)
+
+```bash
+# 1. Make change
+# 2. Commit
+git commit -m "docs: [brief description]"
+# 3. Auto-verify and merge
+```
+
+### Low Risk (30 min)
+
+```bash
+# 1. Make change
+# 2. Verify
+[automated checks pass]
+# 3. Update change log (simplified entry)
+# 4. Commit and merge
+```
+
+### Medium Risk (2 hours)
+
+1. Classify risk in commit message
+2. Run full automated verification
+3. Request peer review
+4. Ensure tests cover changes
+5. Update documentation
+6. Add standard change log entry
+7. Merge with reviewer sign-off
+
+---
+
+**For High/Critical risk, proceed with full workflow below.**
+
+## 1. Inputs Before Work (High/Critical Risk)
 1. Copy `rjw-idd-starter-kit/docs/change-log.md` into your repository and open a new `change-YYYYMMDD-##` row.
 2. Draft a `DEC-####` stub using `rjw-idd-methodology/templates/PROJECT-DEC-template.md` for the problem you are addressing.
 3. Review `docs/living-docs-reconciliation.md`; log and assign any documentation gaps.
@@ -69,8 +132,11 @@ For every AI-assisted integration:
 
 ## 7. Companion Assets
 - `METHOD-0001` — Core methodology principles.
-- `METHOD-0002` — Phase checklists.
+- `METHOD-0002` — Phase checklists (with Quick Start pathway selection).
 - `METHOD-0003` — Role handbook.
-- `rjw-idd-methodology/templates/PROJECT-DEC-template.md` — Decision boilerplate.
+- `METHOD-0006` — Agent trust and autonomy framework.
+- `METHOD-0007` — Streamlined operations and human-friendly design.
+- `rjw-idd-methodology/templates/DEC-template.md` — Full decision boilerplate (High/Critical risk).
+- `rjw-idd-methodology/templates/DEC-LITE-template.md` — Lightweight decision template (Low/Medium risk).
 
 Run this workflow step-by-step. When artefacts, prompts, or scripts evolve, update the corresponding specs/runbooks so the scaffold remains reusable for the next project.
