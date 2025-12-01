@@ -36,6 +36,8 @@ rjw-idd-methodology/
 │   ├── governance/          # Change logs, audit logs, ledgers
 │   └── context/             # Context curation templates
 ├── addons/                  # Domain-specific methodology extensions
+│   ├── config/              # Central feature registry
+│   │   └── features.yml
 │   ├── 3d-game-core/
 │   └── video-ai-enhancer/
 ├── docs/                    # Method-level documentation

@@ -5,7 +5,7 @@ Ensure method doctrine, project artefacts, and add-in outputs stay consistent af
 
 **Assistant Guidance:**
 1. Load latest GDD, Engine, Perf, AI, Network, Observability, and Build specs (`SPEC-3D-*`).
-2. Compare against `method/config/features.yml` and profile overlays to detect drift.
+2. Compare against `addons/config/features.yml` and profile overlays to detect drift.
 3. Generate diffs highlighting:
    - Budget/tolerance mismatches.
    - Unlinked `REQ-####` / `SPEC-####` / `TEST-####` entries.

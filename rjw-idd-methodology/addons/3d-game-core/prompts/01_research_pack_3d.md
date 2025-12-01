@@ -1,7 +1,7 @@
 # PROMPT-3D-0001 — Research Pack (3D Game Core)
 
 **Context for the assistant:**
-- Active feature flag stored in `method/config/features.yml` under `addons.3d_game_core`.
+- Active feature flag stored in `addons/config/features.yml` under `addons.3d_game_core`.
 - Load base config `addons/3d-game-core/config/3d-game-core.yml` and merge with the selected profile file in `addons/3d-game-core/profiles/`.
 - Research goal: capture evidence for requirements IDs (`REQ-3D-*`) that will feed the GDD and engine specs.
 

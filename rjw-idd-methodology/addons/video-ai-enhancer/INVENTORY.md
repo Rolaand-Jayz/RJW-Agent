@@ -11,7 +11,7 @@
 
 ## Integration Hooks
 - Feature toggles: `scripts/addons/enable_video_ai_enhancer.py`, `disable_video_ai_enhancer.py`, `set_video_ai_profile.py`, `verify_video_ai_enhancer.py`, `premerge_guard_video_ai_enhancer.py`.
-- Registry defaults maintained via `scripts/addons/_feature_registry.py` and `method/config/features.yml`.
+- Registry defaults maintained via `scripts/addons/_feature_registry.py` and `addons/config/features.yml`.
 - README `## Add-ins` section and `ci/includes.yml` entries updated idempotently by the enable/disable scripts.
 - GitHub Actions reuse is published via `.github/workflows/video-ai-enhancer.yml`, mirroring the snippet defaults for downstream pipelines.
 - Violation fixtures for CI smoke tests live in `ci_samples/video_quality_violation.json`, `ci_samples/video_latency_violation.json`, and `ci_samples/video_storage_violation.json`.

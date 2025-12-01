@@ -13,7 +13,7 @@
 ## Disabling
 1. Ensure quality, latency, and storage gates are no longer referenced in CI.
 2. Run `python scripts/addons/disable_video_ai_enhancer.py`.
-3. Confirm `method/config/features.yml` sets `video_ai_enhancer.enabled: false` and README no longer lists the add-in.
+3. Confirm `addons/config/features.yml` sets `video_ai_enhancer.enabled: false` and README no longer lists the add-in.
 4. Optional: archive artefacts under project-specific doc control using the RJW-IDD ID schema.
 
 ## Rollback Safety
