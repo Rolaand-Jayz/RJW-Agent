@@ -1,6 +1,6 @@
 # Rolaand Jayz Wayz – Coding with Natural Language: Intelligence Driven Development (RJW-IDD)
 
-> **A disciplined methodology for AI-assisted software development** — no code, just the pure method and templates for the artefacts you create when applying it.
+> **A disciplined methodology for AI-assisted software development** — the pure method and templates for the artefacts you create when applying it.
 
 ## What is RJW-IDD?
 

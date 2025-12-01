@@ -2,7 +2,7 @@
 
 ## Repository Purpose
 
-This repository contains the **RJW-IDD Methodology** in its pure form — documentation and templates only, no code.
+This repository contains the **RJW-IDD Methodology** in its pure form — documentation and templates only.
 
 ## Repo Structure
 
@@ -34,7 +34,6 @@ This repository contains the **RJW-IDD Methodology** in its pure form — docume
 
 This is a methodology-only repository:
 
-- No code (Python, shell scripts, etc.)
 - No implementation tools
 - No CI/CD pipelines for code testing
 - No package management files
