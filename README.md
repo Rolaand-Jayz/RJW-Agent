@@ -24,7 +24,8 @@ rjw-idd-methodology/
 │   └── METHOD-0003-role-handbook.md
 ├── operations/              # Execution playbooks
 │   ├── METHOD-0004-ai-agent-workflows.md (Unified Agent Handbook)
-│   └── METHOD-0005-operations-production-support.md
+│   ├── METHOD-0005-operations-production-support.md
+│   └── METHOD-0006-context-curation-engine.md (Context Curation Engine)
 ├── templates/               # Artifact templates (organised by category)
 │   ├── decisions/           # Decision record templates
 │   ├── requirements/        # Requirement templates
@@ -32,7 +33,8 @@ rjw-idd-methodology/
 │   ├── evidence/            # Research evidence templates
 │   ├── testing/             # Test case templates
 │   ├── documentation/       # Standards, runbooks, guides
-│   └── governance/          # Change logs, audit logs, ledgers
+│   ├── governance/          # Change logs, audit logs, ledgers
+│   └── context/             # Context curation templates
 ├── addons/                  # Domain-specific methodology extensions
 │   ├── 3d-game-core/
 │   └── video-ai-enhancer/
@@ -47,7 +49,7 @@ docs/                        # Reference documentation
 
 ## Core Methodology Components
 
-The methodology is organized into **five core documents**:
+The methodology is organized into **six core documents**:
 
 ### 1. Core Method (`METHOD-0001`)
 
@@ -95,6 +97,16 @@ Guidance for post-deployment phases including:
 - Incident response
 - User feedback collection
 
+### 6. Context Curation Engine (`METHOD-0006`)
+
+A framework for continuously managing context available to AI agents:
+
+- **Context Index** — Per-task documents listing in-scope files, decisions, and assumptions
+- **Turn-Based Curation** — Evaluate, remove, and load context on every agent turn
+- **Automatic Updates** — Propagate changes to affected context indexes automatically
+- **Living Documentation** — Governed source of truth for technologies, architecture, and conventions
+- **Agent Integration** — Trust-level context access and escalation triggers
+
 ## Templates
 
 Copy these templates into your project when applying RJW-IDD:
@@ -114,6 +126,8 @@ Copy these templates into your project when applying RJW-IDD:
 | **Governance** | `templates/governance/STAGE-AUDIT-LOG-template.md` | Phase gate audit reflections |
 | **Governance** | `templates/governance/REQ-LEDGER-template.md` | Requirement traceability matrix |
 | **Governance** | `templates/governance/LIVING-DOCS-RECONCILIATION-template.md` | Documentation debt tracking |
+| **Context** | `templates/context/CTX-INDEX-template.md` | Task-specific context index for AI agents |
+| **Context** | `templates/context/LIVING-DOCS-template.md` | Project living documentation |
 
 See `rjw-idd-methodology/templates/README.md` for detailed usage instructions.
 

@@ -628,6 +628,9 @@ Replace manual steps with automated defaults where possible:
 - `governance/METHOD-0003-role-handbook.md` — Role definitions and responsibilities
 - `operations/METHOD-0004-ai-agent-workflows.md` — AI Agent Handbook (unified agent rules)
 - `operations/METHOD-0005-operations-production-support.md` — Operations and production support
+- `operations/METHOD-0006-context-curation-engine.md` — Context Curation Engine
 - `templates/DEC-LITE-template.md` — Lightweight decision template for Low/Medium risk
 - `templates/PROTO-template.md` — Prototype record template
 - `templates/AGENT-TRUST-template.md` — Trust level change record template
+- `templates/context/CTX-INDEX-template.md` — Task context index template
+- `templates/context/LIVING-DOCS-template.md` — Living documentation template

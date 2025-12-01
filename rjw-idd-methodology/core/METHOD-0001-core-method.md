@@ -83,6 +83,7 @@ For hands-on execution, pair this overview with:
 - `governance/METHOD-0003-role-handbook.md` to keep ownership clear.
 - `operations/METHOD-0004-ai-agent-workflows.md` for AI agent workflows, trust framework, and behavioral contracts.
 - `operations/METHOD-0005-operations-production-support.md` for post-deployment phases.
+- `operations/METHOD-0006-context-curation-engine.md` for context management during AI agent implementation.
 - `templates/decisions/DEC-template.md` when drafting new Tree-of-Thought decisions.
 
 By following the decision-derived structure above, teams can transplant RJW-IDD into any project while keeping the method faithful to the original Tree-of-Thought reasoning that shaped it.

@@ -605,8 +605,11 @@ Prototype mode adjusts how trust levels apply:
 - `governance/METHOD-0002-phase-driver-checklists.md` — Unified Lifecycle & Checklists
 - `governance/METHOD-0003-role-handbook.md` — Role handbook
 - `operations/METHOD-0005-operations-production-support.md` — Operations and production support
+- `operations/METHOD-0006-context-curation-engine.md` — Context Curation Engine
 - `templates/DEC-LITE-template.md` — Lightweight decision template (Low/Medium risk)
 - `templates/PROTO-template.md` — Prototype record template
 - `templates/AGENT-TRUST-template.md` — Trust level change record template
+- `templates/context/CTX-INDEX-template.md` — Task context index template
+- `templates/context/LIVING-DOCS-template.md` — Living documentation template
 
 Run this workflow step-by-step. When artefacts, prompts, or scripts evolve, update the corresponding specs/runbooks so the scaffold remains reusable for the next project.
