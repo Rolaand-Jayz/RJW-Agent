@@ -12,7 +12,7 @@
 
 This document serves as the **governed source of truth** for project knowledge that informs the Context Curation Engine. It captures persistent information about technologies, architecture, conventions, and rules that apply across all tasks.
 
-> **Important:** Update this document whenever the project evolves. Changes to Living Documentation automatically propagate to active Context Indexes.
+> **Important:** Update this document whenever the project evolves. When Living Documentation changes, notify owners of active Context Indexes to update their context accordingly. See METHOD-0006 Section 4.3 for propagation rules.
 
 ---
 

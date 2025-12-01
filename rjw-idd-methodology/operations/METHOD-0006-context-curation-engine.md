@@ -1,8 +1,10 @@
 # METHOD-0006 — Context Curation Engine
 
-This document defines the **Context Curation Engine**, a framework for continuously managing and curating the context available to AI agents during implementation. It ensures agents see only what is relevant to their current task while maintaining a governed source of truth for project knowledge.
+This document defines the **Context Curation Engine**, a methodology framework for continuously managing and curating the context available to AI agents during implementation. It ensures agents see only what is relevant to their current task while maintaining a governed source of truth for project knowledge.
 
-> **TL;DR:** The Context Curation Engine automatically manages what information an AI agent sees on each turn—dropping irrelevant details and loading only what's needed for the current step. Every task gets a Context Index that tracks in-scope files, decisions, and assumptions.
+> **TL;DR:** The Context Curation Engine is a process framework that guides how AI agent context is managed on each turn—dropping irrelevant details and loading only what's needed for the current step. Every task gets a Context Index that tracks in-scope files, decisions, and assumptions.
+>
+> **Note:** This document describes a **methodology framework**, not implemented tooling. The processes and rules defined here should be followed by agents and teams; actual implementation of automated tooling is optional and project-specific.
 
 ---
 
@@ -10,10 +12,10 @@ This document defines the **Context Curation Engine**, a framework for continuou
 
 ### 1.1 Purpose
 
-AI agents working on complex projects often struggle with context limits and relevance filtering. The Context Curation Engine addresses these challenges by:
+AI agents working on complex projects often struggle with context limits and relevance filtering. The Context Curation Engine addresses these challenges by defining processes for:
 
 - **Active Context Management** — Continuously evaluating what information matters for the current task
-- **Automatic Context Updates** — Triggering context refreshes when new features or components are introduced
+- **Context Update Triggers** — Specifying when context refreshes should occur as new features or components are introduced
 - **Living Documentation Integration** — Maintaining a governed source of truth that informs context selection
 - **Task-Scoped Indexes** — Creating per-task documents that explicitly list in-scope information
 
@@ -25,7 +27,7 @@ AI agents working on complex projects often struggle with context limits and rel
 | **Continuous Curation** | Evaluate context on every turn; remove stale information proactively |
 | **Governed Source of Truth** | Living docs serve as the authoritative reference for context decisions |
 | **Explicit Scoping** | Every task has a Context Index documenting what's in and out of scope |
-| **Automatic Propagation** | Changes automatically update affected context indexes |
+| **Propagation on Change** | When changes occur, update affected context indexes following defined rules |
 
 ### 1.3 Integration with RJW-IDD Layers
 
@@ -144,7 +146,18 @@ On every agent turn, the Context Curation Engine performs:
 
 ### 3.3 Context Scoring
 
-Apply a relevance score (0.0 - 1.0) to context items:
+Assign a relevance score (0.0 - 1.0) to context items to guide prioritization. Scoring can be performed by the agent, team, or automated tooling if implemented.
+
+**Scoring Guidelines:**
+
+- **1.0** — Item is directly required for current step (e.g., file being modified, decision being implemented)
+- **0.8** — Item provides essential context (e.g., related specs, immediate dependencies)
+- **0.6** — Item provides helpful background (e.g., architectural patterns, coding conventions)
+- **0.4** — Item may be needed later in the task (e.g., integration points, downstream consumers)
+- **0.2** — Item is peripherally related (e.g., similar features, historical context)
+- **0.0** — Item has no bearing on current task
+
+**Recommended Actions by Score:**
 
 | Score Range | Interpretation | Action |
 |-------------|----------------|--------|
@@ -164,26 +177,28 @@ When approaching context limits:
 
 ---
 
-## 4. Automatic Context Updates
+## 4. Context Update Process
 
 ### 4.1 Change Detection Triggers
 
-When a new feature or component is introduced that can affect downstream code or behavior, the engine automatically updates affected Context Indexes.
+When a new feature or component is introduced that can affect downstream code or behavior, Context Indexes should be updated. The following events should trigger context updates:
+
+> **Implementation Note:** These triggers can be implemented as manual checklists, CI/CD hooks, or automated tooling depending on project needs. The methodology defines what should happen; implementation approach is project-specific.
 
 **Trigger Events:**
 
 | Event Type | Detection Method | Update Action |
 |------------|------------------|---------------|
-| New file added | File system watch | Add to affected area maps |
-| File modified | Diff analysis | Update change history |
-| API change | Interface comparison | Flag dependent contexts |
+| New file added | Code review / file watch | Add to affected area maps |
+| File modified | Diff analysis / commit review | Update change history |
+| API change | Interface comparison / review | Flag dependent contexts |
 | Decision created | DEC-#### creation | Link to relevant indexes |
 | Spec updated | SPEC-#### modification | Propagate to task contexts |
-| Dependency change | Package file analysis | Update technical context |
+| Dependency change | Package file review | Update technical context |
 
-### 4.2 Automatic Update Contents
+### 4.2 Context Update Contents
 
-When triggered, the Context Index update includes:
+When triggered, the Context Index should be updated to include:
 
 #### 4.2.1 Affected Areas Reference
 
@@ -239,32 +254,31 @@ Brief description of what changed and why (1-2 sentences).
 
 ### 4.3 Update Propagation Rules
 
-```yaml
-propagation_rules:
-  # When a decision is created/updated
-  decision_change:
-    - update: all context indexes referencing this decision
-    - add: changelog entry with decision summary
-    - notify: tasks with overlapping scope
+The following rules define how changes should propagate to affected Context Indexes. Teams may implement these as checklists, scripts, or automated workflows.
 
-  # When a specification changes
-  spec_change:
-    - update: context indexes for related requirements
-    - flag: implementation tasks as potentially stale
-    - add: technical description of spec delta
+**When a decision is created/updated:**
 
-  # When code files change
-  code_change:
-    - update: context indexes listing this file
-    - assess: downstream dependencies
-    - add: affected areas reference
+- Update all context indexes that reference this decision
+- Add a changelog entry summarizing the decision
+- Notify owners of tasks with overlapping scope
 
-  # When documentation changes
-  doc_change:
-    - update: context indexes referencing this doc
-    - reconcile: living docs if source doc changed
-    - add: changelog entry if behavioral guidance changed
-```
+**When a specification changes:**
+
+- Update context indexes for related requirements
+- Flag implementation tasks as potentially stale
+- Add technical description of the spec delta
+
+**When code files change:**
+
+- Update context indexes that list this file
+- Assess downstream dependencies
+- Add affected areas reference
+
+**When documentation changes:**
+
+- Update context indexes referencing this documentation
+- Reconcile living docs if a source doc changed
+- Add changelog entry if behavioral guidance changed
 
 ---
 
@@ -577,14 +591,22 @@ Living Documentation:
 
 ### 9.3 Metrics and Health Checks
 
-Monitor context curation effectiveness:
+Monitor context curation effectiveness through periodic assessment. These metrics should be measured during retrospectives or audits.
 
-| Metric | Target | Action if Below |
-|--------|--------|-----------------|
-| Context relevance hit rate | > 85% | Review curation rules |
-| Stale context detection rate | < 5% stale items | Increase update frequency |
-| Propagation latency | < 1 hour | Check trigger mechanisms |
-| Living Docs currency | < 30 days since review | Schedule review |
+**Measurement Methodology:**
+
+| Metric | How to Measure | Target | Action if Below Target |
+|--------|----------------|--------|------------------------|
+| **Context relevance hit rate** | Review completed tasks; count how often loaded context was actually used vs. unused | > 85% used | Review curation criteria; tighten relevance scoring |
+| **Stale context incidents** | Count tasks where outdated context caused rework or errors | < 5% of tasks | Increase update frequency; improve trigger coverage |
+| **Propagation completeness** | Audit changes; verify all affected indexes were updated | 100% coverage | Review propagation rules; add missing triggers |
+| **Living Docs currency** | Check last review date in Living Docs | < 30 days since review | Schedule review; assign owner |
+
+**Health Check Cadence:**
+
+- **Weekly:** Review propagation completeness for recent changes
+- **Monthly:** Assess relevance hit rate from completed tasks
+- **Quarterly:** Full Living Docs review and stale context audit
 
 ---
 

@@ -187,12 +187,16 @@ Log changes as they occur:
 
 ### 7.1 Current Context Relevance
 
+Assign relevance scores (0.0-1.0) to track context priority. Update scores as task progresses.
+
+> **Scoring Guide:** 1.0 = essential for current step; 0.8 = directly relevant; 0.6 = helpful background; 0.4 = may need later; 0.2 = peripherally related; 0.0 = not relevant. See METHOD-0006 Section 3.3 for detailed guidance.
+
 | Context Category | Relevance Score | Last Evaluated | Notes |
 |------------------|-----------------|----------------|-------|
-| Task Scope | 1.0 | YYYY-MM-DD | Core context |
-| Affected Areas | 0.9 | YYYY-MM-DD | Primary focus |
-| Technical Context | 0.8 | YYYY-MM-DD | Supporting |
-| Assumptions | 0.7 | YYYY-MM-DD | Monitor for changes |
+| Task Scope | [Score] | YYYY-MM-DD | [Notes] |
+| Affected Areas | [Score] | YYYY-MM-DD | [Notes] |
+| Technical Context | [Score] | YYYY-MM-DD | [Notes] |
+| Assumptions | [Score] | YYYY-MM-DD | [Notes] |
 
 ### 7.2 Context Removed
 
