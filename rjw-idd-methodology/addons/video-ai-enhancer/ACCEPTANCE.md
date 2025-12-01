@@ -2,13 +2,13 @@
 
 ## Entry Conditions
 - Repository is clean and the base RJW-IDD methodology files are intact.
-- `method/config/features.yml` exists (create via scripts if missing).
+- `addons/config/features.yml` exists (create via scripts if missing).
 - Python 3.11+ available locally; PyYAML remains optional thanks to the fallback parser.
 
 ## Acceptance Tests
 1. **Feature Registry Toggle**
    - Run `python scripts/addons/enable_video_ai_enhancer.py`.
-   - Verify `addons.video_ai_enhancer.enabled: true` in `method/config/features.yml`.
+   - Verify `addons.video_ai_enhancer.enabled: true` in `addons/config/features.yml`.
    - Confirm `ci/includes.yml` lists the video snippets and `README.md` exposes the add-in link.
 2. **Profile Switching**
    - `python scripts/addons/set_video_ai_profile.py --profile live_stream` updates only the video add-in profile.

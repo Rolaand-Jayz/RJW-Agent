@@ -1,6 +1,6 @@
 # SPEC-3D-ENGINE-0001 — Engine Integration Blueprint
 
-- **Active Profile:** `<method/config/features.yml :: addons.3d_game_core.profile>`
+- **Active Profile:** `<addons/config/features.yml :: addons.3d_game_core.profile>`
 - **Linked Decisions:** `DEC-3D-ENGINE-0001`, `DEC-3D-BUILD-0002`
 - **Integration IDs:** `INTEG-3D-ENGINE-0001` (runtime), `INTEG-3D-BUILD-0002` (toolchain)
 

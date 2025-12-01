@@ -1,6 +1,6 @@
 # SPEC-3D-GDD-0001 — Game Design Document (3D)
 
-- **Active Profile:** `<pull from method/config/features.yml :: addons.3d_game_core.profile>`
+- **Active Profile:** `<pull from addons/config/features.yml :: addons.3d_game_core.profile>`
 - **Linked Decision:** `DEC-3D-GDD-0001`
 - **Owning Phase:** `METHOD-0001 :: Discover` → `METHOD-0002 :: Phase Kick-off`
 

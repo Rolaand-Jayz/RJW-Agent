@@ -2,13 +2,13 @@
 
 ## Entry Conditions
 - Repository is clean and the base RJW-IDD methodology files are intact.
-- `method/config/features.yml` exists (scripts create it on demand).
+- `addons/config/features.yml` exists (scripts create it on demand).
 - Python 3.11+ available locally; PyYAML optional (fallback parser provided).
 
 ## Acceptance Tests
 1. **Feature Registry Toggle**
    - Run `python scripts/addons/enable_3d_game_core.py`.
-   - Verify `addons.3d_game_core.enabled: true` in `method/config/features.yml`.
+   - Verify `addons.3d_game_core.enabled: true` in `addons/config/features.yml`.
    - Confirm `ci/includes.yml` lists both CI snippets and `README.md` exposes the add-in link.
 2. **Profile Switching**
    - `python scripts/addons/set_3d_profile.py --profile third_person` should update the registry without disturbing other fields.

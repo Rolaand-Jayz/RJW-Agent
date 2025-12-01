@@ -10,7 +10,7 @@
 - Clean enable/disable scripts that register CI snippets, documentation links, and feature flags in an idempotent fashion.
 
 ## Activation Model
-1. Keep `method/config/features.yml` as the source of truth. `video_ai_enhancer.enabled` defaults to `false`.
+1. Keep `addons/config/features.yml` as the source of truth. `video_ai_enhancer.enabled` defaults to `false`.
 2. Run `python scripts/addons/enable_video_ai_enhancer.py` to opt in. The script registers CI snippets, documentation links, and ensures idempotency.
 3. Switch latency/quality defaults via `python scripts/addons/set_video_ai_profile.py --profile <profile>`.
 4. Disable using `python scripts/addons/disable_video_ai_enhancer.py` to remove CI/documentation wiring without touching other artefacts.

@@ -10,7 +10,7 @@
 - Migration & quickstart guides, pact exemplars, and acceptance criteria for enabling/disabling the add-in cleanly.
 
 ## Activation Model
-1. Keep `method/config/features.yml` as the single source of truth. `3d_game_core.enabled` defaults to `false`.
+1. Keep `addons/config/features.yml` as the single source of truth. `3d_game_core.enabled` defaults to `false`.
 2. Run `python scripts/addons/enable_3d_game_core.py` to opt in. The script injects CI hooks, updates documentation links, and confirms idempotency.
 3. Switch sub-genre defaults via `python scripts/addons/set_3d_profile.py --profile <profile>`.
 4. Disable using `python scripts/addons/disable_3d_game_core.py` to reverse CI/documentation wiring without touching other artefacts.

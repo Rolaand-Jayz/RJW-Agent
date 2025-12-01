@@ -4,7 +4,7 @@
 1. Confirm clean workspace: `git status --short` (or manual check).
 2. Run `python scripts/addons/enable_3d_game_core.py`.
 3. Script effects:
-   - Sets `addons.3d_game_core.enabled: true` in `method/config/features.yml`.
+   - Sets `addons.3d_game_core.enabled: true` in `addons/config/features.yml`.
    - Includes CI snippets (GitHub Actions or generic) based on repo conventions.
    - Adds `Add-ins` section to root `README.md` if absent, linking to `addons/3d-game-core/README.md`.
 4. Choose a profile: `python scripts/addons/set_3d_profile.py --profile <profile>`.
