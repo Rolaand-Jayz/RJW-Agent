@@ -23,6 +23,9 @@ templates/
 │   ├── STAGE-AUDIT-LOG-template.md         # Phase audit reflections
 │   ├── REQ-LEDGER-template.md              # Requirement traceability
 │   └── LIVING-DOCS-RECONCILIATION-template.md  # Documentation gap tracking
+├── context/                # Context curation templates
+│   ├── CTX-INDEX-template.md               # Task context index
+│   └── LIVING-DOCS-template.md             # Project living documentation
 ├── PROTO-template.md       # Prototype record (POC/spike)
 ├── DEC-LITE-template.md    # Lightweight decision (Low/Medium risk)
 └── AGENT-TRUST-template.md # Agent trust level changes
@@ -81,6 +84,13 @@ templates/
 |----------|---------|-------------------|
 | `PROTO-template.md` | Rapid POC/spike documentation with Keep/Flex/Unknown tagging | `PROTO-####` |
 
+### Context Curation (`context/`)
+
+| Template | Purpose | Usage |
+|----------|---------|-------|
+| `CTX-INDEX-template.md` | Task-specific context index for AI agent work | `docs/context/CTX-INDEX-####.md` |
+| `LIVING-DOCS-template.md` | Project living documentation as governed source of truth | `docs/living-docs.md` |
+
 ## How to Use
 
 ### 1. Copy the Template
@@ -128,6 +138,7 @@ Maintain bidirectional links where possible to support audits.
 | **Discovery — Specification** | `REQ-template.md`, `SPEC-template.md`, `DEC-template.md` |
 | **Execution** | `TEST-template.md`, `DOC-template.md` |
 | **Governance** | All governance templates |
+| **Context Curation** | `CTX-INDEX-template.md`, `LIVING-DOCS-template.md` |
 
 ## Add-on Specific Templates
 
@@ -145,3 +156,4 @@ These extend the base templates with domain-specific sections and acceptance cri
 - Role Handbook: `governance/METHOD-0003-role-handbook.md`
 - Unified Agent Handbook: `operations/METHOD-0004-ai-agent-workflows.md`
 - Operations Support: `operations/METHOD-0005-operations-production-support.md`
+- Context Curation Engine: `operations/METHOD-0006-context-curation-engine.md`
