@@ -1,6 +1,6 @@
 # Rolaand Jayz Wayz – Coding with Natural Language: Intelligence Driven Development (RJW-IDD)
 
-> **A disciplined methodology for AI-assisted software development** — no code, just the pure method and templates for the artefacts you create when applying it.
+> **A disciplined methodology for AI-assisted software development** — providing the method, templates, and implementation guidance for building agents that follow this framework.
 
 ## What is RJW-IDD?
 
@@ -13,7 +13,7 @@ RJW-IDD (Intelligence Driven Development) is a methodology that replaces vibe-dr
 
 ## Repository Structure
 
-This repository contains the **pure methodology** and **templates** only — no implementation code.
+This repository contains the methodology, templates, and implementation guidance for building RJW-IDD compliant agents.
 
 ```text
 rjw-idd-methodology/
@@ -143,6 +143,106 @@ See `rjw-idd-methodology/templates/README.md` for detailed usage instructions.
 6. **Document decisions** — Create `DEC-####` records using the decision template for every strategic choice
 7. **Track requirements** — Use the requirement ledger template to maintain traceability
 8. **Maintain governance** — Update change logs and audit logs at each phase gate
+
+## Implementing RJW-IDD in Your Agent
+
+This section provides guidance for developers building AI agents that adhere to the RJW-IDD methodology.
+
+### Agent Core Structure
+
+When building an RJW-IDD compliant agent, implement these core components:
+
+```python
+class RJWIDDAgent:
+    """Base class for RJW-IDD compliant agents."""
+    
+    def __init__(self, agent_id: str, initial_trust_level: int = 0):
+        self.agent_id = agent_id
+        self.trust_level = initial_trust_level  # 0-3 per METHOD-0004
+        self.action_log = []
+        self.decision_records = []
+        
+    def classify_risk(self, change_description: str) -> str:
+        """Classify change risk per METHOD-0002 Section 1."""
+        # Implement risk classification logic
+        # Returns: 'minimal', 'low', 'medium', 'high', 'critical', 'prototype'
+        pass
+    
+    def check_authorization(self, risk_level: str) -> bool:
+        """Verify agent has authority for this risk level."""
+        trust_access = {
+            0: ['minimal'],  # Level 0: Supervised
+            1: ['minimal', 'low'],  # Level 1: Guided
+            2: ['minimal', 'low', 'medium'],  # Level 2: Autonomous
+            3: ['minimal', 'low', 'medium', 'high', 'critical']  # Level 3: Trusted Partner
+        }
+        return risk_level in trust_access.get(self.trust_level, [])
+    
+    def log_action(self, action_type: str, details: dict):
+        """Log all actions per METHOD-0004 Section 7.5."""
+        self.action_log.append({
+            'timestamp': datetime.utcnow().isoformat(),
+            'agent_id': self.agent_id,
+            'trust_level': self.trust_level,
+            'action_type': action_type,
+            'details': details
+        })
+```
+
+### Decision Record Integration
+
+Integrate decision tracking into your agent:
+
+```python
+def create_decision_record(self, decision_id: str, options: list, 
+                           chosen: str, rationale: str) -> dict:
+    """Create a DEC-#### record per METHOD-0001 Section 2."""
+    record = {
+        'id': decision_id,
+        'date': datetime.utcnow().strftime('%Y-%m-%d'),
+        'options': options,
+        'chosen': chosen,
+        'rationale': rationale,
+        'evidence_refs': [],  # Link to EVD-#### records
+        'spec_refs': []  # Link to SPEC-#### records
+    }
+    self.decision_records.append(record)
+    return record
+```
+
+### Trust Level Verification
+
+Implement continuous trust verification:
+
+```python
+def calculate_trust_score(self) -> float:
+    """Calculate rolling trust score per METHOD-0004 Section 3.3."""
+    weights = {
+        'process_compliance': 0.25,
+        'output_quality': 0.30,
+        'behavioral_alignment': 0.30,
+        'human_assessment': 0.15
+    }
+    
+    scores = {
+        'process_compliance': self._measure_process_compliance(),
+        'output_quality': self._measure_output_quality(),
+        'behavioral_alignment': self._measure_behavioral_alignment(),
+        'human_assessment': self._get_human_assessment_score()
+    }
+    
+    return sum(weights[k] * scores[k] for k in weights)
+
+def check_promotion_eligibility(self) -> bool:
+    """Check if agent meets promotion criteria."""
+    score = self.calculate_trust_score()
+    return score >= 0.90  # Promotion threshold
+```
+
+For detailed implementation patterns, see:
+
+- `rjw-idd-methodology/operations/METHOD-0004-ai-agent-workflows.md` — Trust framework and behavioral contracts
+- `rjw-idd-methodology/governance/METHOD-0002-phase-driver-checklists.md` — Risk classification and workflow selection
 
 ## Addons (Domain Extensions)
 

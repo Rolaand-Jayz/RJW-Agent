@@ -599,7 +599,466 @@ Prototype mode adjusts how trust levels apply:
 
 ---
 
-## 11. Related Documentation
+## 11. Implementing the Agent Handbook in Your Agent
+
+This section provides code patterns for hardcoding the trust framework, behavioral contracts, and verification systems into your agent.
+
+### 11.1 Trust Ladder Implementation
+
+```python
+from enum import IntEnum
+from dataclasses import dataclass, field
+from typing import List, Dict, Optional
+from datetime import datetime
+
+class TrustLevel(IntEnum):
+    """Trust levels per Section 1.2."""
+    SUPERVISED = 0      # All actions require human approval
+    GUIDED = 1          # Pre-approved categories proceed automatically
+    AUTONOMOUS = 2      # Operates independently with post-hoc review
+    TRUSTED_PARTNER = 3 # Participates in planning and prioritization
+
+@dataclass
+class TrustLadder:
+    """Manages agent trust progression."""
+    
+    agent_id: str
+    current_level: TrustLevel = TrustLevel.SUPERVISED
+    consecutive_approvals: int = 0
+    actions_at_level: int = 0
+    escalation_accuracy: float = 1.0
+    guardrail_violations: int = 0
+    days_at_current_level: int = 0
+    
+    # Pathway access per trust level
+    PATHWAY_ACCESS = {
+        TrustLevel.SUPERVISED: ['minimal'],
+        TrustLevel.GUIDED: ['minimal', 'low'],
+        TrustLevel.AUTONOMOUS: ['minimal', 'low', 'medium'],
+        TrustLevel.TRUSTED_PARTNER: ['minimal', 'low', 'medium', 'high', 'critical']
+    }
+    
+    def can_access_pathway(self, risk_level: str) -> bool:
+        """Check if agent can access a risk pathway."""
+        return risk_level.lower() in self.PATHWAY_ACCESS[self.current_level]
+    
+    def check_promotion_criteria(self) -> Dict[str, bool]:
+        """Check if agent meets promotion criteria to next level."""
+        if self.current_level == TrustLevel.SUPERVISED:
+            return {
+                'consecutive_approvals_10': self.consecutive_approvals >= 10,
+                'zero_rejected_safety': self.guardrail_violations == 0,
+                'context_understanding': True,  # Assessed via spot checks
+                'completed_full_cycle': self.actions_at_level >= 20
+            }
+        elif self.current_level == TrustLevel.GUIDED:
+            return {
+                'actions_50_no_failures': self.actions_at_level >= 50,
+                'escalation_accuracy_95': self.escalation_accuracy >= 0.95,
+                'zero_guardrail_violations': self.guardrail_violations == 0,
+                'positive_governance_assessment': True  # External check
+            }
+        elif self.current_level == TrustLevel.AUTONOMOUS:
+            return {
+                'days_90_no_demotion': self.days_at_current_level >= 90,
+                'audit_findings_meet_expectations': True,
+                'judgment_in_ambiguous_situations': True,
+                'cross_project_track_record': True
+            }
+        return {}
+    
+    def promote(self) -> bool:
+        """Attempt to promote to next trust level."""
+        criteria = self.check_promotion_criteria()
+        if all(criteria.values()) and self.current_level < TrustLevel.TRUSTED_PARTNER:
+            self.current_level = TrustLevel(self.current_level + 1)
+            self.actions_at_level = 0
+            self.days_at_current_level = 0
+            return True
+        return False
+    
+    def demote(self, reason: str):
+        """Demote to previous trust level."""
+        if self.current_level > TrustLevel.SUPERVISED:
+            self.current_level = TrustLevel(self.current_level - 1)
+            self.actions_at_level = 0
+            self.days_at_current_level = 0
+```
+
+### 11.2 Behavioral Contract Implementation
+
+```python
+@dataclass
+class BehavioralContract:
+    """Implements behavioral contracts per Section 2."""
+    
+    transparency_log: List[Dict] = field(default_factory=list)
+    boundary_violations: List[Dict] = field(default_factory=list)
+    
+    def log_decision(self, decision: str, reasoning: str, 
+                     confidence: float, uncertainty_areas: List[str]):
+        """Log decision with reasoning per transparency contract."""
+        self.transparency_log.append({
+            'timestamp': datetime.utcnow().isoformat(),
+            'decision': decision,
+            'reasoning': reasoning,
+            'confidence': confidence,
+            'uncertainty_areas': uncertainty_areas
+        })
+    
+    def check_boundary(self, action: str, agent_level: TrustLevel,
+                       required_level: TrustLevel) -> bool:
+        """Check if action is within authorized boundaries."""
+        if agent_level < required_level:
+            self.boundary_violations.append({
+                'timestamp': datetime.utcnow().isoformat(),
+                'action': action,
+                'agent_level': agent_level.name,
+                'required_level': required_level.name
+            })
+            return False
+        return True
+    
+    def should_escalate(self, action_type: str, 
+                        pre_approved_categories: List[str]) -> bool:
+        """Determine if action should escalate to human review.
+        
+        Escalation triggers per Section 1.2 Level 1.
+        """
+        escalation_triggers = [
+            'external_dependency',
+            'security_sensitive',
+            'scope_modification',
+            'conflict_with_existing'
+        ]
+        
+        if action_type in escalation_triggers:
+            return True
+        if action_type not in pre_approved_categories:
+            return True
+        return False
+
+class CoreContract:
+    """Core behavioral contract all agents must follow."""
+    
+    def __init__(self, agent_id: str):
+        self.agent_id = agent_id
+        self.audit_trail = []
+    
+    def verify_action(self, action: dict, trust_level: TrustLevel) -> dict:
+        """Verify action against core contract terms."""
+        violations = []
+        
+        # Transparency checks
+        if not action.get('reasoning'):
+            violations.append('Missing reasoning for action')
+        if action.get('confidence') is None:
+            violations.append('Confidence level not disclosed')
+        
+        # Boundary checks
+        if action.get('modifies_production') and not action.get('explicit_auth'):
+            violations.append('Production modification without authorization')
+        
+        # Quality checks
+        if not action.get('verified_before_completion'):
+            violations.append('Output not verified before completion')
+        
+        # Log to audit trail
+        self.audit_trail.append({
+            'timestamp': datetime.utcnow().isoformat(),
+            'action': action,
+            'violations': violations,
+            'passed': len(violations) == 0
+        })
+        
+        return {
+            'passed': len(violations) == 0,
+            'violations': violations
+        }
+```
+
+### 11.3 Continuous Verification Implementation
+
+```python
+@dataclass
+class VerificationResult:
+    passed: bool
+    check_type: str
+    details: Dict
+    timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+
+class ContinuousVerifier:
+    """Implements continuous verification per Section 3."""
+    
+    def __init__(self):
+        self.verification_history: List[VerificationResult] = []
+    
+    def verify_process(self, action: dict) -> VerificationResult:
+        """Process verification - runs on every action."""
+        checks = {
+            'change_log_present': self._check_change_log(action),
+            'linked_artifacts_exist': self._check_artifact_links(action),
+            'approvals_obtained': self._check_approvals(action),
+            'timing_within_bounds': self._check_timing(action)
+        }
+        
+        result = VerificationResult(
+            passed=all(checks.values()),
+            check_type='process',
+            details=checks
+        )
+        self.verification_history.append(result)
+        return result
+    
+    def verify_output(self, artifact: dict) -> VerificationResult:
+        """Output verification - runs on every artifact."""
+        checks = {
+            'id_format_valid': self._validate_id_format(artifact.get('id', '')),
+            'cross_refs_resolve': self._check_cross_references(artifact),
+            'no_orphaned_refs': self._check_orphaned_references(artifact),
+            'structure_matches': self._validate_structure(artifact)
+        }
+        
+        result = VerificationResult(
+            passed=all(checks.values()),
+            check_type='output',
+            details=checks
+        )
+        self.verification_history.append(result)
+        return result
+    
+    def verify_behavior(self, agent_actions: List[dict], 
+                        trust_level: TrustLevel) -> VerificationResult:
+        """Behavioral verification - continuous monitoring."""
+        checks = {
+            'within_boundaries': self._check_boundaries(agent_actions, trust_level),
+            'escalations_appropriate': self._check_escalations(agent_actions),
+            'risk_classifications_accurate': self._check_risk_accuracy(agent_actions),
+            'contracts_honored': self._check_contract_compliance(agent_actions)
+        }
+        
+        result = VerificationResult(
+            passed=all(checks.values()),
+            check_type='behavioral',
+            details=checks
+        )
+        self.verification_history.append(result)
+        return result
+    
+    def _validate_id_format(self, id_str: str) -> bool:
+        """Validate artifact ID follows scheme (REQ-####, SPEC-####, etc.)."""
+        import re
+        patterns = [
+            r'^REQ-\d{4}$', r'^SPEC-\d{4}$', r'^TEST-\d{4}$',
+            r'^DEC-\d{4}$', r'^EVD-\d{4}$', r'^DOC-\d{4}$'
+        ]
+        return any(re.match(p, id_str) for p in patterns)
+```
+
+### 11.4 Trust Score Calculation
+
+```python
+class TrustScorer:
+    """Calculates rolling trust score per Section 3.3."""
+    
+    WEIGHTS = {
+        'process_compliance': 0.25,
+        'output_quality': 0.30,
+        'behavioral_alignment': 0.30,
+        'human_assessment': 0.15
+    }
+    
+    THRESHOLDS = {
+        'promotion_eligible': 0.90,
+        'stable': 0.75,
+        'warning': 0.60,
+        'demotion': 0.50
+    }
+    
+    def __init__(self, verifier: ContinuousVerifier):
+        self.verifier = verifier
+        self.human_assessments: List[float] = []
+    
+    def calculate_score(self) -> float:
+        """Calculate current trust score."""
+        history = self.verifier.verification_history
+        
+        # Process compliance score
+        process_checks = [r for r in history if r.check_type == 'process']
+        process_score = sum(1 for r in process_checks if r.passed) / max(len(process_checks), 1)
+        
+        # Output quality score
+        output_checks = [r for r in history if r.check_type == 'output']
+        output_score = sum(1 for r in output_checks if r.passed) / max(len(output_checks), 1)
+        
+        # Behavioral alignment score
+        behavior_checks = [r for r in history if r.check_type == 'behavioral']
+        behavior_score = sum(1 for r in behavior_checks if r.passed) / max(len(behavior_checks), 1)
+        
+        # Human assessment score (average of recent assessments)
+        human_score = sum(self.human_assessments[-10:]) / max(len(self.human_assessments[-10:]), 1)
+        
+        return (
+            self.WEIGHTS['process_compliance'] * process_score +
+            self.WEIGHTS['output_quality'] * output_score +
+            self.WEIGHTS['behavioral_alignment'] * behavior_score +
+            self.WEIGHTS['human_assessment'] * human_score
+        )
+    
+    def get_status(self) -> str:
+        """Get trust status based on current score."""
+        score = self.calculate_score()
+        if score >= self.THRESHOLDS['promotion_eligible']:
+            return 'promotion_eligible'
+        elif score >= self.THRESHOLDS['stable']:
+            return 'stable'
+        elif score >= self.THRESHOLDS['warning']:
+            return 'warning'
+        else:
+            return 'demotion_required'
+```
+
+### 11.5 Graduated Response Implementation
+
+```python
+class GraduatedResponseHandler:
+    """Implements graduated response protocol per Section 3.4."""
+    
+    SEVERITY_IMPACTS = {
+        'minor': -0.02,      # Documentation gap
+        'moderate': -0.05,   # Boundary approach
+        'significant': -0.15, # Boundary violation
+        'critical': 'immediate_demotion'
+    }
+    
+    def __init__(self, trust_ladder: TrustLadder, scorer: TrustScorer):
+        self.trust_ladder = trust_ladder
+        self.scorer = scorer
+    
+    def handle_violation(self, severity: str, violation_details: dict) -> dict:
+        """Handle trust violation with proportionate response."""
+        impact = self.SEVERITY_IMPACTS.get(severity)
+        
+        if severity == 'critical':
+            # Immediate demotion and full stop
+            self.trust_ladder.demote(reason=violation_details.get('reason', 'Critical violation'))
+            return {
+                'action': 'immediate_demotion',
+                'requires': 'incident_review',
+                'agent_paused': True
+            }
+        
+        elif severity == 'significant':
+            # Pause and escalate
+            return {
+                'action': 'pause_escalate',
+                'trust_impact': impact,
+                'requires': 'human_approval_to_resume'
+            }
+        
+        elif severity == 'moderate':
+            # Immediate notification
+            return {
+                'action': 'notify_require_acknowledgment',
+                'trust_impact': impact,
+                'requires': 'acknowledgment'
+            }
+        
+        else:  # minor
+            # Auto-remediate if possible
+            return {
+                'action': 'auto_remediate',
+                'trust_impact': impact,
+                'logged_for_review': True
+            }
+```
+
+### 11.6 Complete Agent Integration Example
+
+```python
+class RJWIDDCompliantAgent:
+    """Complete example of an RJW-IDD compliant agent."""
+    
+    def __init__(self, agent_id: str):
+        self.agent_id = agent_id
+        self.trust_ladder = TrustLadder(agent_id=agent_id)
+        self.contract = CoreContract(agent_id=agent_id)
+        self.verifier = ContinuousVerifier()
+        self.scorer = TrustScorer(self.verifier)
+        self.response_handler = GraduatedResponseHandler(
+            self.trust_ladder, self.scorer
+        )
+        self.behavioral_contract = BehavioralContract()
+    
+    def execute_action(self, action: dict) -> dict:
+        """Execute an action with full RJW-IDD compliance."""
+        
+        # 1. Check authorization
+        risk_level = action.get('risk_level', 'medium')
+        if not self.trust_ladder.can_access_pathway(risk_level):
+            return {
+                'status': 'blocked',
+                'reason': f'Trust level {self.trust_ladder.current_level.name} '
+                          f'cannot access {risk_level} risk pathway'
+            }
+        
+        # 2. Verify against behavioral contract
+        contract_result = self.contract.verify_action(
+            action, self.trust_ladder.current_level
+        )
+        if not contract_result['passed']:
+            violation_response = self.response_handler.handle_violation(
+                'moderate', {'violations': contract_result['violations']}
+            )
+            return {'status': 'contract_violation', **violation_response}
+        
+        # 3. Check if escalation needed
+        if self.behavioral_contract.should_escalate(
+            action.get('type', ''), 
+            ['documentation', 'test_creation', 'evidence_curation']
+        ):
+            return {
+                'status': 'escalation_required',
+                'reason': 'Action requires human review'
+            }
+        
+        # 4. Log decision with transparency
+        self.behavioral_contract.log_decision(
+            decision=action.get('description', ''),
+            reasoning=action.get('reasoning', ''),
+            confidence=action.get('confidence', 0.8),
+            uncertainty_areas=action.get('uncertainties', [])
+        )
+        
+        # 5. Execute and verify
+        result = self._perform_action(action)
+        
+        # 6. Run continuous verification
+        self.verifier.verify_process(action)
+        if result.get('artifact'):
+            self.verifier.verify_output(result['artifact'])
+        
+        # 7. Update trust metrics
+        self.trust_ladder.actions_at_level += 1
+        if result.get('success'):
+            self.trust_ladder.consecutive_approvals += 1
+        
+        # 8. Check for promotion
+        if self.trust_ladder.promote():
+            result['trust_promoted'] = True
+            result['new_level'] = self.trust_ladder.current_level.name
+        
+        return result
+    
+    def _perform_action(self, action: dict) -> dict:
+        """Perform the actual action - implement based on your agent's capabilities."""
+        # Implement your agent's action execution here
+        return {'success': True}
+```
+
+---
+
+## 12. Related Documentation
 
 - `core/METHOD-0001-core-method.md` — Core methodology principles
 - `governance/METHOD-0002-phase-driver-checklists.md` — Unified Lifecycle & Checklists

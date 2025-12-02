@@ -6,11 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Implementation code snippets throughout documentation for agent developers
+- Guidance on how to hardcode the framework into custom agents
+
 ### Changed
 
-- Restructured repository to contain pure methodology only
-- Removed starter kit code, scripts, and tools
-- Repository now focuses on method documentation and artifact templates
+- Updated repository to include implementation guidance alongside methodology
+- Repository now provides method documentation, templates, and code examples for building compliant agents
 
 ### Removed
 

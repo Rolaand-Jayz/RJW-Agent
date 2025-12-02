@@ -2,7 +2,7 @@
 
 ## Repository Purpose
 
-This repository contains the **RJW-IDD Methodology** in its pure form — documentation and templates only, no code.
+This repository contains the **RJW-IDD Methodology** — documentation, templates, and implementation guidance for building agents that adhere to this framework.
 
 ## Repo Structure
 
@@ -30,18 +30,10 @@ This repository contains the **RJW-IDD Methodology** in its pure form — docume
 - Update `rjw-idd-methodology/docs/change-log.md` for all changes
 - Keep documentation clear and accessible
 
-### What NOT to Add
-
-This is a methodology-only repository:
-
-- No code (Python, shell scripts, etc.)
-- No implementation tools
-- No CI/CD pipelines for code testing
-- No package management files
-
 ### What TO Add
 
 - Method documentation and guidance
 - Templates for artifacts (decisions, specs, requirements)
 - Checklists and role definitions
 - Domain-specific methodology extensions (addons)
+- Implementation code snippets and examples for agent developers
