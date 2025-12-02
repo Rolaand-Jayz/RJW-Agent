@@ -622,7 +622,409 @@ Replace manual steps with automated defaults where possible:
 
 ---
 
-## 9. Related Documentation
+## 9. Implementing Lifecycle & Checklists in Your Agent
+
+This section provides code patterns for implementing risk classification, pathway selection, and checklist enforcement in your agent.
+
+### 9.1 Risk Classification Engine
+
+```python
+from enum import Enum
+from typing import Dict, List, Optional
+
+class RiskLevel(Enum):
+    MINIMAL = "minimal"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+    PROTOTYPE = "prototype"
+
+class RiskClassifier:
+    """Implements risk classification flowchart from Section 1."""
+    
+    def classify(self, change: dict) -> RiskLevel:
+        """Classify change risk level per the flowchart."""
+        
+        # Is this prototype/POC/spike work?
+        if change.get('is_prototype', False):
+            return RiskLevel.PROTOTYPE
+        
+        # Does this change behavior?
+        if not change.get('changes_behavior', True):
+            return RiskLevel.MINIMAL
+        
+        # Is the change easily reversible?
+        if change.get('easily_reversible', False):
+            return RiskLevel.LOW
+        
+        # Does it affect multiple components or external interfaces?
+        if not change.get('affects_multiple_components', False):
+            return RiskLevel.MEDIUM
+        
+        # Does it involve security, data integrity, or availability?
+        if change.get('security_sensitive', False) or \
+           change.get('data_integrity', False) or \
+           change.get('affects_availability', False):
+            return RiskLevel.CRITICAL
+        
+        return RiskLevel.HIGH
+    
+    def get_pathway(self, risk_level: RiskLevel) -> str:
+        """Get the appropriate pathway for risk level."""
+        pathways = {
+            RiskLevel.MINIMAL: "Section 2.1 - Minimal Risk Path (5 min)",
+            RiskLevel.LOW: "Section 2.2 - Low Risk Path (30 min)",
+            RiskLevel.MEDIUM: "Section 2.3 - Medium Risk Path (2 hours)",
+            RiskLevel.HIGH: "Section 3 - High Risk Path (Full Discovery + Execution)",
+            RiskLevel.CRITICAL: "Section 4 - Critical Risk Path (Enhanced Governance)",
+            RiskLevel.PROTOTYPE: "Section 6 - Prototype Mode"
+        }
+        return pathways[risk_level]
+```
+
+### 9.2 Checklist Enforcement
+
+```python
+from dataclasses import dataclass, field
+from datetime import datetime
+
+@dataclass
+class ChecklistItem:
+    id: str
+    description: str
+    required: bool = True
+    completed: bool = False
+    completed_at: Optional[str] = None
+    evidence: Optional[str] = None
+
+class ChecklistEnforcer:
+    """Enforces phase checklists per Section 2-4."""
+    
+    MINIMAL_RISK_CHECKLIST = [
+        ChecklistItem("min-1", "Commit with docs: prefix message"),
+        ChecklistItem("min-2", "Automated lint/format check passes"),
+        ChecklistItem("min-3", "Merge on pass")
+    ]
+    
+    LOW_RISK_CHECKLIST = [
+        ChecklistItem("low-1", "Automated checks pass"),
+        ChecklistItem("low-2", "Change log entry added (simplified)"),
+        ChecklistItem("low-3", "Artifact IDs follow scheme"),
+        ChecklistItem("low-4", "Optional peer review", required=False)
+    ]
+    
+    MEDIUM_RISK_CHECKLIST = [
+        ChecklistItem("med-1", "Risk classification documented in commit"),
+        ChecklistItem("med-2", "Full automated verification suite passes"),
+        ChecklistItem("med-3", "Peer review completed"),
+        ChecklistItem("med-4", "Tests cover changes"),
+        ChecklistItem("med-5", "Documentation updated"),
+        ChecklistItem("med-6", "Standard change log entry added"),
+        ChecklistItem("med-7", "One reviewer sign-off obtained")
+    ]
+    
+    HIGH_RISK_CHECKLIST = {
+        'governance_setup': [
+            ChecklistItem("high-gov-1", "docs/decisions/ directory exists"),
+            ChecklistItem("high-gov-2", "docs/change-log.md initialized"),
+            ChecklistItem("high-gov-3", "Roles confirmed"),
+            ChecklistItem("high-gov-4", "Stage audit log initialized")
+        ],
+        'discovery_research': [
+            ChecklistItem("high-disc-1", "DEC-#### drafted for harvest goal"),
+            ChecklistItem("high-disc-2", "evidence_tasks.json updated"),
+            ChecklistItem("high-disc-3", "Harvester executed"),
+            ChecklistItem("high-disc-4", "Evidence curated and promoted"),
+            ChecklistItem("high-disc-5", "Validators executed"),
+            ChecklistItem("high-disc-6", "Change log updated"),
+            ChecklistItem("high-disc-7", "Audit reflection completed")
+        ],
+        'discovery_spec': [
+            ChecklistItem("high-spec-1", "DEC-#### for spec scope drafted"),
+            ChecklistItem("high-spec-2", "Requirement ledger template ready"),
+            ChecklistItem("high-spec-3", "Specs created across all bands"),
+            ChecklistItem("high-spec-4", "Requirement ledger refreshed"),
+            ChecklistItem("high-spec-5", "Living docs reconciliation updated"),
+            ChecklistItem("high-spec-6", "ID validator passed"),
+            ChecklistItem("high-spec-7", "Change log entry with DEC link")
+        ],
+        'discovery_exit': [
+            ChecklistItem("high-exit-1", "Evidence meets recency requirement"),
+            ChecklistItem("high-exit-2", "Ledger, specs, reconciliation aligned"),
+            ChecklistItem("high-exit-3", "Scope freeze in latest DEC-####")
+        ],
+        'execution': [
+            ChecklistItem("high-exec-1", "Implementation DEC-#### crafted"),
+            ChecklistItem("high-exec-2", "Tooling configured"),
+            ChecklistItem("high-exec-3", "Failing tests written first"),
+            ChecklistItem("high-exec-4", "Documentation updated with code"),
+            ChecklistItem("high-exec-5", "Integration transcripts archived"),
+            ChecklistItem("high-exec-6", "Full test suite passes"),
+            ChecklistItem("high-exec-7", "Change log updated"),
+            ChecklistItem("high-exec-8", "Audit reflection completed")
+        ]
+    }
+    
+    def __init__(self, risk_level: RiskLevel):
+        self.risk_level = risk_level
+        self.checklist = self._get_checklist(risk_level)
+    
+    def _get_checklist(self, risk_level: RiskLevel) -> List[ChecklistItem]:
+        """Get appropriate checklist for risk level."""
+        if risk_level == RiskLevel.MINIMAL:
+            return self.MINIMAL_RISK_CHECKLIST.copy()
+        elif risk_level == RiskLevel.LOW:
+            return self.LOW_RISK_CHECKLIST.copy()
+        elif risk_level == RiskLevel.MEDIUM:
+            return self.MEDIUM_RISK_CHECKLIST.copy()
+        elif risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]:
+            # Flatten high risk checklist
+            items = []
+            for phase_items in self.HIGH_RISK_CHECKLIST.values():
+                items.extend(phase_items)
+            return items
+        return []
+    
+    def complete_item(self, item_id: str, evidence: str = None):
+        """Mark a checklist item as complete."""
+        for item in self.checklist:
+            if item.id == item_id:
+                item.completed = True
+                item.completed_at = datetime.utcnow().isoformat()
+                item.evidence = evidence
+                return True
+        return False
+    
+    def can_proceed(self) -> tuple:
+        """Check if all required items are complete."""
+        incomplete = [
+            item for item in self.checklist 
+            if item.required and not item.completed
+        ]
+        return (len(incomplete) == 0, incomplete)
+    
+    def get_progress(self) -> dict:
+        """Get checklist progress."""
+        total = len(self.checklist)
+        completed = sum(1 for item in self.checklist if item.completed)
+        required = [item for item in self.checklist if item.required]
+        required_completed = sum(1 for item in required if item.completed)
+        
+        return {
+            'total': total,
+            'completed': completed,
+            'percentage': (completed / total * 100) if total else 0,
+            'required_remaining': len(required) - required_completed,
+            'can_proceed': required_completed == len(required)
+        }
+```
+
+### 9.3 Prototype Mode Implementation
+
+```python
+from enum import Enum
+
+class PrototypeTag(Enum):
+    KEEP = "keep"      # Essential to POC, preserve on promotion
+    FLEX = "flex"      # Scaffolding, replace on promotion
+    UNKNOWN = "unknown" # Needs evaluation
+
+@dataclass
+class PrototypeRecord:
+    proto_id: str
+    title: str
+    intent: str
+    success_criteria: List[str]
+    time_box_days: int
+    start_date: str
+    status: str = "in_progress"  # in_progress, promoted, archived, abandoned
+    components: Dict[str, PrototypeTag] = field(default_factory=dict)
+    learnings: List[str] = field(default_factory=list)
+    exit_decision: Optional[str] = None
+    exit_rationale: Optional[str] = None
+    promoted_to_dec: Optional[str] = None
+
+class PrototypeModeManager:
+    """Manages prototype mode per Section 6."""
+    
+    TIME_BOX_LIMITS = {
+        'quick_spike': (2, 7),      # 2-7 days
+        'standard_poc': (7, 21),    # 1-3 weeks
+        'complex_feasibility': (14, 28),  # 2-4 weeks
+        'technology_evaluation': (7, 21)  # 1-3 weeks
+    }
+    
+    MAX_DAYS = 28  # Hard limit: 4 weeks
+    
+    def __init__(self):
+        self.prototypes: Dict[str, PrototypeRecord] = {}
+        self._next_id = 1
+    
+    def start_prototype(self, proto_type: str, title: str,
+                        intent: str, success_criteria: List[str]) -> PrototypeRecord:
+        """Start a new prototype."""
+        min_days, max_days = self.TIME_BOX_LIMITS.get(
+            proto_type, (7, 21)
+        )
+        
+        proto = PrototypeRecord(
+            proto_id=f"PROTO-{self._next_id:04d}",
+            title=title,
+            intent=intent,
+            success_criteria=success_criteria,
+            time_box_days=max_days,
+            start_date=datetime.utcnow().strftime("%Y-%m-%d")
+        )
+        
+        self._next_id += 1
+        self.prototypes[proto.proto_id] = proto
+        return proto
+    
+    def tag_component(self, proto_id: str, component: str, 
+                      tag: PrototypeTag):
+        """Tag a component as keep/flex/unknown."""
+        if proto_id in self.prototypes:
+            self.prototypes[proto_id].components[component] = tag
+    
+    def add_learning(self, proto_id: str, learning: str):
+        """Record a learning during prototype work."""
+        if proto_id in self.prototypes:
+            self.prototypes[proto_id].learnings.append(learning)
+    
+    def check_time_box(self, proto_id: str) -> dict:
+        """Check time box status."""
+        proto = self.prototypes.get(proto_id)
+        if not proto:
+            return {'error': 'Prototype not found'}
+        
+        start = datetime.strptime(proto.start_date, "%Y-%m-%d")
+        elapsed = (datetime.utcnow() - start).days
+        remaining = proto.time_box_days - elapsed
+        
+        return {
+            'elapsed_days': elapsed,
+            'remaining_days': max(0, remaining),
+            'time_box_days': proto.time_box_days,
+            'expired': elapsed >= proto.time_box_days,
+            'at_hard_limit': elapsed >= self.MAX_DAYS
+        }
+    
+    def evaluate_success(self, proto_id: str, 
+                         results: Dict[str, bool]) -> dict:
+        """Evaluate against success criteria."""
+        proto = self.prototypes.get(proto_id)
+        if not proto:
+            return {'error': 'Prototype not found'}
+        
+        met = sum(1 for c in proto.success_criteria if results.get(c, False))
+        total = len(proto.success_criteria)
+        
+        return {
+            'criteria_met': met,
+            'criteria_total': total,
+            'percentage': (met / total * 100) if total else 0,
+            'recommendation': 'promote' if met == total else 
+                             'archive' if met > 0 else 'abandon'
+        }
+    
+    def exit_prototype(self, proto_id: str, decision: str,
+                       rationale: str, dec_id: str = None):
+        """Exit prototype with decision."""
+        proto = self.prototypes.get(proto_id)
+        if not proto:
+            return
+        
+        proto.status = decision  # promoted, archived, abandoned
+        proto.exit_decision = decision
+        proto.exit_rationale = rationale
+        
+        if decision == 'promoted' and dec_id:
+            proto.promoted_to_dec = dec_id
+```
+
+### 9.4 Complete Lifecycle Agent Integration
+
+```python
+class LifecycleAgent:
+    """Agent with integrated lifecycle management."""
+    
+    def __init__(self):
+        self.classifier = RiskClassifier()
+        self.current_enforcer: Optional[ChecklistEnforcer] = None
+        self.prototype_mgr = PrototypeModeManager()
+    
+    def start_change(self, change: dict) -> dict:
+        """Start a new change with proper risk classification."""
+        
+        # 1. Classify risk
+        risk_level = self.classifier.classify(change)
+        pathway = self.classifier.get_pathway(risk_level)
+        
+        # 2. Initialize appropriate checklist
+        self.current_enforcer = ChecklistEnforcer(risk_level)
+        
+        # 3. If prototype, also initialize prototype tracking
+        if risk_level == RiskLevel.PROTOTYPE:
+            proto = self.prototype_mgr.start_prototype(
+                proto_type=change.get('prototype_type', 'standard_poc'),
+                title=change.get('title', ''),
+                intent=change.get('intent', ''),
+                success_criteria=change.get('success_criteria', [])
+            )
+            return {
+                'risk_level': risk_level.value,
+                'pathway': pathway,
+                'checklist': self.current_enforcer.get_progress(),
+                'prototype_id': proto.proto_id
+            }
+        
+        return {
+            'risk_level': risk_level.value,
+            'pathway': pathway,
+            'checklist': self.current_enforcer.get_progress()
+        }
+    
+    def complete_step(self, step_id: str, evidence: str = None) -> dict:
+        """Complete a checklist step."""
+        if not self.current_enforcer:
+            return {'error': 'No active change'}
+        
+        self.current_enforcer.complete_item(step_id, evidence)
+        can_proceed, remaining = self.current_enforcer.can_proceed()
+        
+        return {
+            'completed': step_id,
+            'can_proceed': can_proceed,
+            'remaining_required': [item.description for item in remaining],
+            'progress': self.current_enforcer.get_progress()
+        }
+    
+    def check_gate(self) -> dict:
+        """Check if current phase gate can be passed."""
+        if not self.current_enforcer:
+            return {'error': 'No active change'}
+        
+        can_proceed, remaining = self.current_enforcer.can_proceed()
+        
+        if can_proceed:
+            return {
+                'gate_passed': True,
+                'message': 'All required items complete. Ready to proceed.'
+            }
+        else:
+            return {
+                'gate_passed': False,
+                'blocking_items': [
+                    {'id': item.id, 'description': item.description}
+                    for item in remaining
+                ]
+            }
+```
+
+---
+
+## 10. Related Documentation
 
 - `core/METHOD-0001-core-method.md` — Core methodology principles
 - `governance/METHOD-0003-role-handbook.md` — Role definitions and responsibilities

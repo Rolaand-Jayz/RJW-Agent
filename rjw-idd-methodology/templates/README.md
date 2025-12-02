@@ -149,6 +149,304 @@ Domain-specific add-ons provide additional templates:
 
 These extend the base templates with domain-specific sections and acceptance criteria.
 
+## Implementing Template Management in Your Agent
+
+When building an agent that uses RJW-IDD templates, implement these patterns for template handling:
+
+### Template Loading and Instantiation
+
+```python
+from pathlib import Path
+from datetime import datetime
+import re
+
+class TemplateManager:
+    """Manages RJW-IDD templates for agent use."""
+    
+    def __init__(self, templates_dir: str):
+        self.templates_dir = Path(templates_dir)
+        self.id_counters = {}  # Track ID sequences per type
+    
+    def load_template(self, template_path: str) -> str:
+        """Load a template file."""
+        full_path = self.templates_dir / template_path
+        return full_path.read_text()
+    
+    def get_next_id(self, prefix: str) -> str:
+        """Generate next sequential ID for artifact type."""
+        if prefix not in self.id_counters:
+            self.id_counters[prefix] = self._scan_existing_ids(prefix)
+        self.id_counters[prefix] += 1
+        return f"{prefix}-{self.id_counters[prefix]:04d}"
+    
+    def instantiate_decision(self, title: str, context: str,
+                             options: list, chosen: str, 
+                             rationale: str) -> dict:
+        """Create a decision record from template."""
+        template = self.load_template("decisions/DEC-template.md")
+        dec_id = self.get_next_id("DEC")
+        
+        content = template.replace("DEC-XXXX", dec_id)
+        content = content.replace("[Title]", title)
+        content = content.replace("YYYY-MM-DD", datetime.now().strftime("%Y-%m-%d"))
+        content = content.replace("[Context]", context)
+        content = content.replace("[Options]", "\n".join(f"- {o}" for o in options))
+        content = content.replace("[Decision]", chosen)
+        content = content.replace("[Rationale]", rationale)
+        
+        return {
+            'id': dec_id,
+            'content': content,
+            'type': 'decision'
+        }
+    
+    def instantiate_requirement(self, description: str,
+                                acceptance_criteria: list,
+                                evidence_refs: list = None) -> dict:
+        """Create a requirement from template."""
+        template = self.load_template("requirements/REQ-template.md")
+        req_id = self.get_next_id("REQ")
+        
+        content = template.replace("REQ-XXXX", req_id)
+        content = content.replace("[Description]", description)
+        content = content.replace(
+            "[Acceptance Criteria]",
+            "\n".join(f"- [ ] {c}" for c in acceptance_criteria)
+        )
+        content = content.replace(
+            "[Evidence]",
+            "\n".join(evidence_refs) if evidence_refs else "- None"
+        )
+        
+        return {
+            'id': req_id,
+            'content': content,
+            'type': 'requirement',
+            'evidence_refs': evidence_refs or []
+        }
+    
+    def instantiate_spec(self, title: str, requirements: list,
+                         design: str, interfaces: list = None) -> dict:
+        """Create a specification from template."""
+        template = self.load_template("specs/SPEC-template.md")
+        spec_id = self.get_next_id("SPEC")
+        
+        content = template.replace("SPEC-XXXX", spec_id)
+        content = content.replace("[Title]", title)
+        content = content.replace(
+            "[Requirements]",
+            "\n".join(f"- {r}" for r in requirements)
+        )
+        content = content.replace("[Design]", design)
+        
+        return {
+            'id': spec_id,
+            'content': content,
+            'type': 'spec',
+            'requirement_refs': requirements
+        }
+```
+
+### Traceability Management
+
+```python
+class TraceabilityManager:
+    """Manages artifact traceability per RJW-IDD guidelines."""
+    
+    def __init__(self):
+        self.artifacts = {}  # id -> artifact
+        self.links = []  # (from_id, to_id, link_type)
+    
+    def register_artifact(self, artifact: dict):
+        """Register an artifact for traceability."""
+        self.artifacts[artifact['id']] = artifact
+        
+        # Auto-link based on references
+        for ref in artifact.get('evidence_refs', []):
+            self.add_link(artifact['id'], ref, 'derived_from')
+        for ref in artifact.get('requirement_refs', []):
+            self.add_link(artifact['id'], ref, 'implements')
+    
+    def add_link(self, from_id: str, to_id: str, link_type: str):
+        """Add a traceability link between artifacts."""
+        self.links.append((from_id, to_id, link_type))
+    
+    def get_trace_chain(self, artifact_id: str) -> dict:
+        """Get full traceability chain for an artifact.
+        
+        Returns the chain: Evidence → Requirements → Specs → Tests
+        """
+        chain = {
+            'artifact': artifact_id,
+            'derived_from': [],
+            'implements': [],
+            'verified_by': []
+        }
+        
+        for from_id, to_id, link_type in self.links:
+            if from_id == artifact_id:
+                if link_type in chain:
+                    chain[link_type].append(to_id)
+            elif to_id == artifact_id:
+                # Reverse lookup - if something implements this, it derives from us
+                if link_type == 'derived_from':
+                    chain['verified_by'].append(from_id)
+                elif link_type == 'implements':
+                    chain['derived_from'].append(from_id)
+        
+        return chain
+    
+    def validate_traceability(self) -> list:
+        """Validate all artifacts have required traceability."""
+        issues = []
+        
+        for artifact_id, artifact in self.artifacts.items():
+            if artifact['type'] == 'requirement':
+                # Requirements should link to evidence
+                if not artifact.get('evidence_refs'):
+                    issues.append(f"{artifact_id}: No evidence linked")
+            
+            elif artifact['type'] == 'spec':
+                # Specs should link to requirements
+                if not artifact.get('requirement_refs'):
+                    issues.append(f"{artifact_id}: No requirements linked")
+            
+            elif artifact['type'] == 'test':
+                # Tests should link to specs
+                if not artifact.get('spec_refs'):
+                    issues.append(f"{artifact_id}: No specs linked")
+        
+        return issues
+```
+
+### Ledger Management
+
+```python
+class RequirementLedger:
+    """Manages requirement traceability ledger."""
+    
+    def __init__(self):
+        self.entries = []
+    
+    def add_entry(self, req_id: str, evidence_ids: list,
+                  spec_ids: list, test_ids: list, status: str):
+        """Add or update a ledger entry."""
+        entry = {
+            'req_id': req_id,
+            'evidence_ids': evidence_ids,
+            'spec_ids': spec_ids,
+            'test_ids': test_ids,
+            'status': status,
+            'updated': datetime.utcnow().isoformat()
+        }
+        
+        # Update existing or add new
+        for i, existing in enumerate(self.entries):
+            if existing['req_id'] == req_id:
+                self.entries[i] = entry
+                return
+        self.entries.append(entry)
+    
+    def get_coverage_report(self) -> dict:
+        """Generate coverage report."""
+        total = len(self.entries)
+        with_specs = sum(1 for e in self.entries if e['spec_ids'])
+        with_tests = sum(1 for e in self.entries if e['test_ids'])
+        
+        return {
+            'total_requirements': total,
+            'with_specifications': with_specs,
+            'with_tests': with_tests,
+            'spec_coverage': with_specs / total if total else 0,
+            'test_coverage': with_tests / total if total else 0
+        }
+    
+    def to_markdown(self) -> str:
+        """Export ledger as markdown table."""
+        lines = [
+            "| REQ ID | Evidence | Specs | Tests | Status |",
+            "|--------|----------|-------|-------|--------|"
+        ]
+        
+        for entry in self.entries:
+            lines.append(
+                f"| {entry['req_id']} | "
+                f"{', '.join(entry['evidence_ids'])} | "
+                f"{', '.join(entry['spec_ids'])} | "
+                f"{', '.join(entry['test_ids'])} | "
+                f"{entry['status']} |"
+            )
+        
+        return "\n".join(lines)
+```
+
+### Integration Example
+
+```python
+class RJWIDDTemplateAgent:
+    """Agent with integrated template management."""
+    
+    def __init__(self, project_root: str, templates_dir: str):
+        self.template_mgr = TemplateManager(templates_dir)
+        self.traceability = TraceabilityManager()
+        self.ledger = RequirementLedger()
+        self.project_root = Path(project_root)
+    
+    def process_evidence_to_requirement(self, evidence: dict) -> dict:
+        """Convert curated evidence into a requirement."""
+        # Create requirement from evidence
+        req = self.template_mgr.instantiate_requirement(
+            description=f"Implement capability based on {evidence['evd_id']}",
+            acceptance_criteria=evidence.get('implications', []),
+            evidence_refs=[evidence['evd_id']]
+        )
+        
+        # Register for traceability
+        self.traceability.register_artifact(req)
+        
+        # Update ledger
+        self.ledger.add_entry(
+            req_id=req['id'],
+            evidence_ids=[evidence['evd_id']],
+            spec_ids=[],
+            test_ids=[],
+            status='drafted'
+        )
+        
+        # Save to project
+        self._save_artifact(req, 'requirements')
+        
+        return req
+    
+    def create_spec_for_requirements(self, req_ids: list, 
+                                     design: str) -> dict:
+        """Create specification addressing requirements."""
+        spec = self.template_mgr.instantiate_spec(
+            title=f"Specification for {', '.join(req_ids)}",
+            requirements=req_ids,
+            design=design
+        )
+        
+        self.traceability.register_artifact(spec)
+        
+        # Update ledger entries
+        for req_id in req_ids:
+            for entry in self.ledger.entries:
+                if entry['req_id'] == req_id:
+                    entry['spec_ids'].append(spec['id'])
+                    entry['status'] = 'specified'
+        
+        self._save_artifact(spec, 'specs')
+        
+        return spec
+    
+    def _save_artifact(self, artifact: dict, category: str):
+        """Save artifact to project directory."""
+        path = self.project_root / category / f"{artifact['id']}.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(artifact['content'])
+```
+
 ## Related Documentation
 
 - Core Method: `core/METHOD-0001-core-method.md`
