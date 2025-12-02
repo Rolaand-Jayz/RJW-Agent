@@ -104,8 +104,13 @@ class GovernanceManager:
         existing = list(self.decisions_dir.glob("DEC-*.md"))
         if not existing:
             return 1
-        ids = [int(f.stem.split("-")[1]) for f in existing]
-        return max(ids) + 1
+        ids = []
+        for f in existing:
+            try:
+                ids.append(int(f.stem.split("-")[1]))
+            except (IndexError, ValueError):
+                continue
+        return max(ids, default=0) + 1
     
     def create_decision(self, title: str, options: list, 
                         chosen: str, rationale: str, evidence_ids: list = None) -> str:

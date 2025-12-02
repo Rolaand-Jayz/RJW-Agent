@@ -215,7 +215,7 @@ class TemplateManager:
         )
         content = content.replace(
             "[Evidence]",
-            "\n".join(evidence_refs or ["None"])
+            "\n".join(evidence_refs) if evidence_refs else "- None"
         )
         
         return {
@@ -285,13 +285,14 @@ class TraceabilityManager:
         
         for from_id, to_id, link_type in self.links:
             if from_id == artifact_id:
-                chain.get(link_type, []).append(to_id)
+                if link_type in chain:
+                    chain[link_type].append(to_id)
             elif to_id == artifact_id:
-                # Reverse lookup
-                if link_type == 'implements':
-                    chain['derived_from'].append(from_id)
-                elif link_type == 'verifies':
+                # Reverse lookup - if something implements this, it derives from us
+                if link_type == 'derived_from':
                     chain['verified_by'].append(from_id)
+                elif link_type == 'implements':
+                    chain['derived_from'].append(from_id)
         
         return chain
     

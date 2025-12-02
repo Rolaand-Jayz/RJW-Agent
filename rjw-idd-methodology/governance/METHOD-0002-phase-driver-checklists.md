@@ -782,7 +782,7 @@ class ChecklistEnforcer:
             # Flatten high risk checklist
             items = []
             for phase_items in self.HIGH_RISK_CHECKLIST.values():
-                items.extend([item for item in phase_items])
+                items.extend(phase_items)
             return items
         return []
     

@@ -158,7 +158,9 @@ class RJWIDDAgent:
     
     def __init__(self, agent_id: str, initial_trust_level: int = 0):
         self.agent_id = agent_id
-        self.trust_level = initial_trust_level  # 0-3 per METHOD-0004
+        # Trust levels: 0=Supervised, 1=Guided, 2=Autonomous, 3=Trusted Partner
+        # See METHOD-0004 Section 1.2 for full definitions
+        self.trust_level = initial_trust_level
         self.action_log = []
         self.decision_records = []
         

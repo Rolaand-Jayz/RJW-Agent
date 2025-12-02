@@ -906,7 +906,14 @@ class TrustScorer:
         )
     
     def get_status(self) -> str:
-        """Get trust status based on current score."""
+        """Get trust status based on current score.
+        
+        Thresholds in descending order:
+        - promotion_eligible: 0.90+
+        - stable: 0.75+
+        - warning: 0.60+
+        - demotion_required: below 0.60
+        """
         score = self.calculate_score()
         if score >= self.THRESHOLDS['promotion_eligible']:
             return 'promotion_eligible'
@@ -998,8 +1005,7 @@ class RJWIDDCompliantAgent:
         if not self.trust_ladder.can_access_pathway(risk_level):
             return {
                 'status': 'blocked',
-                'reason': f'Trust level {self.trust_ladder.current_level.name} '
-                          f'cannot access {risk_level} risk pathway'
+                'reason': f'Trust level {self.trust_ladder.current_level.name} cannot access {risk_level} risk pathway'
             }
         
         # 2. Verify against behavioral contract
