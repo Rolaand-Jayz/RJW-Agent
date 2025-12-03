@@ -368,19 +368,22 @@ class ResearchHarvester:
     """
     
     def __init__(self, output_dir: str = "research/evidence", 
-                 templates_dir: Optional[str] = None):
+                 templates_dir: Optional[str] = None,
+                 llm_provider: Optional[Any] = None):
         """
         Initialize the ResearchHarvester.
         
         Args:
             output_dir: Directory to save evidence files
             templates_dir: Path to templates directory (optional)
+            llm_provider: Optional LLM provider for research tasks
         """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
         self.template_manager = TemplateManager(templates_dir)
         self.evidence_registry: Dict[str, Dict] = {}
+        self.llm_provider = llm_provider
         
         # Load existing evidence files
         self._load_existing_evidence()
@@ -524,11 +527,8 @@ class ResearchHarvester:
         """
         Conduct research and extract insights.
         
-        This is a simulation. In production, this would:
-        - Query search engines, documentation sites, GitHub, etc.
-        - Use web scraping or APIs to gather information
-        - Apply NLP to extract key insights
-        - Synthesize findings
+        Uses Tavily for web search and LLM for summarization when available.
+        Falls back to simulated output if tools are not available.
         
         Args:
             topic: Research topic
@@ -537,7 +537,55 @@ class ResearchHarvester:
         Returns:
             Tuple of (summary, key_insights_list)
         """
-        # Simulated research output
+        # Try to use Tavily + LLM for real research
+        if self.llm_provider and not raw_content:
+            try:
+                # Try to import and use Tavily
+                tavily_api_key = os.getenv("TAVILY_API_KEY")
+                if tavily_api_key:
+                    from tavily import TavilyClient
+                    
+                    # Search using Tavily
+                    tavily = TavilyClient(api_key=tavily_api_key)
+                    search_results = tavily.search(query=topic, max_results=3)
+                    
+                    # Extract content from results
+                    search_content = []
+                    for result in search_results.get('results', []):
+                        search_content.append(f"Source: {result.get('url', 'Unknown')}\n{result.get('content', '')}")
+                    
+                    combined_content = "\n\n".join(search_content)
+                    
+                    # Use LLM to summarize and extract insights
+                    prompt = f"""Research topic: {topic}
+
+Search results:
+{combined_content}
+
+Please provide:
+1. A concise summary (2-3 sentences) of the key findings
+2. A JSON array of 3-5 specific insights or best practices
+
+Format your response as JSON with keys: "summary" and "insights" (array of strings)"""
+                    
+                    schema = {
+                        "summary": "string",
+                        "insights": ["string"]
+                    }
+                    
+                    result = self.llm_provider.generate_json(prompt, schema)
+                    
+                    summary = result.get('summary', f"Research conducted on '{topic}'")
+                    key_insights = result.get('insights', [])
+                    
+                    if summary and key_insights:
+                        return summary, key_insights
+            except Exception as e:
+                # Fall back to simulated output on error
+                import warnings
+                warnings.warn(f"Real research failed, using simulated output: {e}")
+        
+        # Fallback: Simulated research output
         if raw_content:
             summary = f"Research findings on '{topic}' based on provided content."
             key_insights = [

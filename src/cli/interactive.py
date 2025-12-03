@@ -33,7 +33,8 @@ class InteractiveREPL:
     def __init__(self, 
                  session_id: Optional[str] = None,
                  yolo_mode: bool = False,
-                 trust_level: str = "SUPERVISED"):
+                 trust_level: str = "SUPERVISED",
+                 provider: Optional[str] = None):
         """
         Initialize the interactive REPL.
         
@@ -41,6 +42,7 @@ class InteractiveREPL:
             session_id: Optional session ID to resume
             yolo_mode: Enable YOLO mode for auto-approval
             trust_level: Initial trust level
+            provider: Optional LLM provider name
         """
         self.session = Session(session_id)
         self.formatter = Formatter()
@@ -49,7 +51,8 @@ class InteractiveREPL:
         self.optimizer = PromptOptimizer(
             research_output_dir=f".rjw-sessions/{self.session.session_id}/research",
             specs_output_dir=f".rjw-sessions/{self.session.session_id}/specs",
-            decisions_output_dir=f".rjw-sessions/{self.session.session_id}/decisions"
+            decisions_output_dir=f".rjw-sessions/{self.session.session_id}/decisions",
+            provider=provider
         )
         
         trust_level_enum = TrustLevel[trust_level]

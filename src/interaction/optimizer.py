@@ -8,6 +8,7 @@ from typing import Dict, List, Optional
 from pathlib import Path
 from ..discovery.research import ResearchHarvester
 from ..utils import TemplateManager
+from ..brain import get_provider, LLMProvider
 
 
 class PromptOptimizer:
@@ -32,7 +33,8 @@ class PromptOptimizer:
     def __init__(self, 
                  research_output_dir: str = "research/evidence",
                  specs_output_dir: str = "specs",
-                 decisions_output_dir: str = "decisions"):
+                 decisions_output_dir: str = "decisions",
+                 provider: Optional[str] = None):
         """
         Initialize the PromptOptimizer.
         
@@ -40,8 +42,19 @@ class PromptOptimizer:
             research_output_dir: Directory for evidence files
             specs_output_dir: Directory for specification files
             decisions_output_dir: Directory for decision files
+            provider: Optional LLM provider name
         """
-        self.research_harvester = ResearchHarvester(research_output_dir)
+        # Initialize LLM provider
+        try:
+            self.llm_provider = get_provider(provider)
+        except Exception as e:
+            # Fall back to None if provider initialization fails
+            # This allows the tool to work without LLM for now
+            self.llm_provider = None
+            import warnings
+            warnings.warn(f"Failed to initialize LLM provider: {e}")
+        
+        self.research_harvester = ResearchHarvester(research_output_dir, llm_provider=self.llm_provider)
         self.template_manager = TemplateManager()
         
         self.specs_output_dir = Path(specs_output_dir)
@@ -119,10 +132,8 @@ class PromptOptimizer:
         """
         Extract research topics from user input.
         
-        This is a simplified implementation. In production, this could use:
-        - NLP to identify key concepts
-        - Entity recognition to extract technical terms
-        - Intent classification to determine research scope
+        Uses the LLM to analyze user input and identify key research topics
+        when available. Falls back to keyword-based extraction if LLM is not available.
         
         Args:
             user_input: User's natural language input
@@ -130,7 +141,46 @@ class PromptOptimizer:
         Returns:
             List of research topics
         """
-        # Simple keyword-based extraction
+        # Try to use LLM for intelligent topic extraction
+        if self.llm_provider:
+            try:
+                prompt = f"""Analyze this user request and extract 1-3 key technical topics that would need research:
+
+User request: "{user_input}"
+
+Return a JSON array of topics (strings). Each topic should be specific and researchable.
+Example: ["authentication patterns", "database design", "API security"]"""
+                
+                schema = {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Array of research topics"
+                }
+                
+                result = self.llm_provider.generate_json(prompt, schema)
+                
+                # Extract topics from result
+                if isinstance(result, dict) and 'topics' in result:
+                    topics = result['topics']
+                elif isinstance(result, list):
+                    topics = result
+                else:
+                    # Try to find a list in the result
+                    for key, value in result.items():
+                        if isinstance(value, list) and len(value) > 0:
+                            topics = value
+                            break
+                    else:
+                        topics = []
+                
+                if topics and len(topics) > 0:
+                    return topics[:3]  # Limit to 3 topics
+            except Exception as e:
+                # Fall back to keyword-based extraction on error
+                import warnings
+                warnings.warn(f"LLM topic extraction failed, falling back to keywords: {e}")
+        
+        # Fallback: Simple keyword-based extraction
         topics = []
         
         # Look for common patterns
