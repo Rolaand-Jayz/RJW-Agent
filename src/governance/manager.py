@@ -17,6 +17,13 @@ class TrustLevel(Enum):
     TRUSTED_PARTNER = 3  # Full autonomy with oversight
 
 
+class RiskLevel(Enum):
+    """Risk levels for deployment pathways (METHOD-0002 Section 1)."""
+    STREAMLINED = "streamlined"  # Consolidates former Minimal/Low/Medium/High/Critical
+    YOLO = "yolo"  # Autonomous self-approval mode
+    PROTOTYPE = "prototype"  # POC/spike/experimental work
+
+
 class ChecklistStatus(Enum):
     """Status of checklist validation."""
     NOT_STARTED = "not_started"
@@ -133,6 +140,55 @@ class ChecklistEnforcer:
         return self.checklists.get(phase, [])
 
 
+class RiskClassifier:
+    """
+    Implements risk classification for deployment pathway selection.
+    
+    This class consolidates the former 6-pathway system (Minimal, Low, Medium, 
+    High, Critical, Prototype) into exactly 3 pathways per METHOD-0002.
+    """
+    
+    def classify(self, change: Dict) -> RiskLevel:
+        """
+        Classify change into one of three deployment pathways.
+        
+        Args:
+            change: Dictionary describing the change with keys:
+                - is_prototype: bool - POC/spike/experimental work
+                - yolo_mode: bool - Autonomous self-approval requested
+                
+        Returns:
+            RiskLevel: STREAMLINED, YOLO, or PROTOTYPE
+        """
+        # Is this prototype/POC/spike work?
+        if change.get('is_prototype', False):
+            return RiskLevel.PROTOTYPE
+        
+        # Is YOLO mode explicitly requested?
+        if change.get('yolo_mode', False):
+            return RiskLevel.YOLO
+        
+        # Default to streamlined path for all production-ready changes
+        return RiskLevel.STREAMLINED
+    
+    def get_pathway(self, risk_level: RiskLevel) -> str:
+        """
+        Get the appropriate pathway documentation reference for risk level.
+        
+        Args:
+            risk_level: The classified risk level
+            
+        Returns:
+            String describing the pathway
+        """
+        pathways = {
+            RiskLevel.STREAMLINED: "Section 2.1 - Streamlined Path (production-ready changes)",
+            RiskLevel.YOLO: "Section 2.2 - YOLO Path (autonomous self-approval)",
+            RiskLevel.PROTOTYPE: "Section 2.3 - Prototype Path (POC/spike/experimental)"
+        }
+        return pathways[risk_level]
+
+
 class GovernanceManager:
     """
     Manages governance and autonomy decisions for the RJW-IDD agent.
@@ -234,31 +290,38 @@ class GovernanceManager:
         """
         Check if current trust level authorizes the risk level.
         
-        Based on METHOD-0004 trust ladder:
-        - SUPERVISED (0): Minimal risk only
-        - GUIDED (1): Minimal, Low risk
-        - AUTONOMOUS (2): Minimal, Low, Medium risk
-        - TRUSTED_PARTNER (3): All risk levels
+        With three pathways (METHOD-0002):
+        - Streamlined path: Appropriate scrutiny based on change scope
+        - YOLO path: Handled by yolo_mode flag
+        - Prototype path: Relaxed gates for POC work
+        
+        For backward compatibility, still supports old risk levels:
+        - SUPERVISED (0): Minimal/Low risk
+        - GUIDED (1): Minimal/Low/Medium risk  
+        - AUTONOMOUS (2): All streamlined changes
+        - TRUSTED_PARTNER (3): All pathways
         
         Args:
-            risk_level: Risk level to check
+            risk_level: Risk level to check (streamlined, yolo, prototype, or legacy values)
             
         Returns:
             True if authorized
         """
-        risk_hierarchy = {
-            'minimal': 0,
-            'low': 1,
-            'medium': 2,
-            'high': 3,
-            'critical': 3
-        }
+        # Map new pathways to authorization
+        if risk_level in ['streamlined', 'prototype']:
+            # Streamlined and prototype paths available at GUIDED level and above
+            return self.trust_level.value >= TrustLevel.GUIDED.value
         
+        if risk_level == 'yolo':
+            # YOLO path requires AUTONOMOUS or higher
+            return self.trust_level.value >= TrustLevel.AUTONOMOUS.value
+        
+        # Backward compatibility for old risk levels
         trust_authorizations = {
-            TrustLevel.SUPERVISED: ['minimal'],
-            TrustLevel.GUIDED: ['minimal', 'low'],
-            TrustLevel.AUTONOMOUS: ['minimal', 'low', 'medium'],
-            TrustLevel.TRUSTED_PARTNER: ['minimal', 'low', 'medium', 'high', 'critical']
+            TrustLevel.SUPERVISED: ['minimal', 'low'],
+            TrustLevel.GUIDED: ['minimal', 'low', 'medium'],
+            TrustLevel.AUTONOMOUS: ['minimal', 'low', 'medium', 'high', 'streamlined', 'prototype'],
+            TrustLevel.TRUSTED_PARTNER: ['minimal', 'low', 'medium', 'high', 'critical', 'streamlined', 'yolo', 'prototype']
         }
         
         return risk_level in trust_authorizations.get(self.trust_level, [])
