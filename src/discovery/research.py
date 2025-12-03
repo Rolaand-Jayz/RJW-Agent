@@ -30,6 +30,12 @@ class UserEvidenceParser:
     - All original information is preserved with traceability
     """
     
+    # Configurable limits for parsing
+    MAX_INSIGHTS = 10
+    MAX_URLS = 5
+    MAX_CITATIONS = 3
+    RAW_CONTENT_PREVIEW_CHARS = 1000
+    
     def __init__(self, template_manager: Optional[TemplateManager] = None):
         """
         Initialize the UserEvidenceParser.
@@ -160,7 +166,7 @@ class UserEvidenceParser:
                 seen.add(insight)
                 unique_insights.append(insight)
         
-        return unique_insights[:10]  # Limit to 10 insights
+        return unique_insights[:self.MAX_INSIGHTS]
     
     def _extract_sources(self, text: str) -> List[Dict[str, str]]:
         """Extract source references from user research."""
@@ -169,7 +175,7 @@ class UserEvidenceParser:
         # Look for URLs
         url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
         urls = re.findall(url_pattern, text)
-        for url in urls[:5]:  # Limit to 5 URLs
+        for url in urls[:self.MAX_URLS]:
             sources.append({'type': 'URL', 'reference': url})
         
         # Look for citation patterns
@@ -181,7 +187,7 @@ class UserEvidenceParser:
         
         for pattern in citation_patterns:
             matches = re.findall(pattern, text, re.MULTILINE)
-            for match in matches[:3]:
+            for match in matches[:self.MAX_CITATIONS]:
                 if isinstance(match, tuple):
                     sources.append({'type': 'Citation', 'reference': f"{match[0]} - {match[1]}"})
                 else:
@@ -298,7 +304,7 @@ class UserEvidenceParser:
 > Original user-provided content preserved for traceability:
 
 ```
-{parsed_data['raw_content'][:1000]}{'...' if len(parsed_data['raw_content']) > 1000 else ''}
+{parsed_data['raw_content'][:self.RAW_CONTENT_PREVIEW_CHARS]}{'...' if len(parsed_data['raw_content']) > self.RAW_CONTENT_PREVIEW_CHARS else ''}
 ```
 
 ## Key Insights
