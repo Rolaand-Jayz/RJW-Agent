@@ -11,6 +11,24 @@ RJW-IDD (Intelligence Driven Development) is a methodology that replaces vibe-dr
 - **Specification-driven design** before implementation begins
 - **Test-driven execution** with living documentation
 
+## Quick Start: CLI
+
+Install and run the CLI:
+
+```bash
+# Install the package
+pip install -e .
+
+# Start interactive session
+rjw
+
+# Or use one-shot commands
+rjw run "Add authentication to API"
+
+# Get help
+rjw --help
+```
+
 ## Repository Structure
 
 This repository contains the methodology, templates, and implementation guidance for building RJW-IDD compliant agents.
@@ -133,6 +151,84 @@ Copy these templates into your project when applying RJW-IDD:
 | **Context** | `templates/context/LIVING-DOCS-template.md` | Project living documentation |
 
 See `rjw-idd-methodology/templates/README.md` for detailed usage instructions.
+
+## Using the CLI
+
+The RJW-IDD CLI provides an interactive interface similar to Google Gemini, Claude, and other AI tools.
+
+### Interactive Mode
+
+Start an interactive session:
+
+```bash
+# Basic interactive session
+rjw
+
+# Or explicitly use 'chat' command
+rjw chat
+
+# Resume a specific session
+rjw --session my_project
+
+# Start with YOLO mode (auto-approval)
+rjw --yolo
+
+# Set trust level
+rjw --trust AUTONOMOUS
+```
+
+### Available Commands in Interactive Mode
+
+Once in interactive mode, you can use these commands:
+
+- `/help` - Show available commands
+- `/status` - Show current session status (evidence, decisions, specs)
+- `/history [limit]` - Show conversation history
+- `/clear` - Clear conversation history
+- `/yolo` - Toggle YOLO mode on/off
+- `/trust <level>` - Set trust level (SUPERVISED, GUIDED, AUTONOMOUS, TRUSTED_PARTNER)
+- `/exit` or `/quit` - Exit the CLI (or use Ctrl+D)
+
+### One-Shot Commands
+
+Execute single commands without interactive mode:
+
+```bash
+# Process a request
+rjw run "Add authentication to API"
+
+# With YOLO mode
+rjw run "Implement caching" --yolo
+
+# With specific trust level
+rjw run "Add logging" --trust GUIDED
+```
+
+### Session Management
+
+```bash
+# List all sessions
+rjw sessions
+
+# Show session info
+rjw sessions --info session_20231203_143022_abc123
+
+# Delete a session
+rjw sessions --delete session_20231203_143022_abc123
+```
+
+### Trust Levels
+
+The CLI supports four trust levels from the RJW-IDD methodology:
+
+- **SUPERVISED** (default) - All actions require approval
+- **GUIDED** - Routine actions auto-approved
+- **AUTONOMOUS** - Most actions auto-approved
+- **TRUSTED_PARTNER** - Full autonomy with oversight
+
+### YOLO Mode
+
+YOLO mode enables automatic self-approval when checklist requirements are met, allowing faster iteration while maintaining governance.
 
 ## Using This Methodology
 

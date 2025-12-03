@@ -49,3 +49,7 @@ venv/
 env/
 ENV/
 .venv/
+
+# RJW-IDD CLI output
+.rjw-output/
+.rjw-sessions/
