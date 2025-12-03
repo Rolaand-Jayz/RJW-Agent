@@ -1,0 +1,11 @@
+# RJW-IDD Agent Framework Dependencies
+
+# Core dependencies (none required for basic functionality)
+# The framework uses only Python standard library
+
+# Development dependencies (optional)
+pytest>=7.0.0          # For running tests
+pytest-cov>=4.0.0      # For test coverage
+black>=23.0.0          # For code formatting
+flake8>=6.0.0          # For code linting
+mypy>=1.0.0            # For type checking
