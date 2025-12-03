@@ -63,13 +63,14 @@ The foundational document describing:
 
 ### 2. Unified Lifecycle & Checklists (`METHOD-0002`)
 
-The **single source of truth** for all process checklists:
+The **single source of truth** for all process checklists with **three deployment pathways**:
 
-- **Risk Selection Logic** — Entry point for classifying change risk level
-- **Streamlined Pathways** — Fast tracks for Minimal/Low/Medium risk changes
-- **Full Discovery→Execution Loop** — High/Critical risk change processes
-- **Prototype Mode** — Keep/Flex/Unknown tagging and relaxed gates for POC/spike work
+- **Deployment Pathway Selection** — Choose from exactly 3 pathways (Streamlined, YOLO, Prototype)
+- **Streamlined Path** — Single production path for all changes with graduated response (consolidates former Minimal/Low/Medium/High/Critical)
+- **YOLO Path** — Autonomous self-approval mode with checklist enforcement
+- **Prototype Path** — Keep/Flex/Unknown tagging and relaxed gates for POC/spike work
 - **Agent Trust Integration** — Trust levels linked to pathway access
+- **User Evidence Handling** — Automatic parsing and reformatting of user-provided research
 
 ### 3. Role Handbook (`METHOD-0003`)
 

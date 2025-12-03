@@ -2,15 +2,23 @@
 
 Use these checklists to force the same lifecycle run that originally created RJW-IDD. Every box must be checked before advancing to the next phase. Record completion in `docs/change-log.md` and append the relevant `DEC-####` entry each time you revisit the method.
 
-> **TL;DR:** This document is the single source of truth for all process checklists—Standard, Streamlined, and Prototype pathways. Start by classifying your risk level below, then follow the appropriate pathway.
+> **TL;DR:** This document is the single source of truth for all process checklists—**three pathways only**: Streamlined, YOLO, and Prototype. Start by classifying your deployment pathway below, then follow the appropriate process.
 
 ---
 
-## 1. Risk Selection Logic — Entry Point
+## 1. Deployment Pathway Selection — Entry Point
 
-**Start here.** Classify your change risk level first, then follow the appropriate pathway.
+**Start here.** Select one of three deployment pathways based on your change type.
 
-### Risk Classification Flowchart
+### Three Deployment Pathways
+
+The RJW-IDD methodology uses **exactly three deployment pathways**:
+
+1. **Streamlined Path (Section 2.1)** — Single path for all production-ready changes with appropriate scrutiny based on scope
+2. **YOLO Path (Section 2.2)** — Autonomous self-approval mode with checklist validation
+3. **Prototype Path (Section 2.3)** — For POC/spike/experimental work not intended for immediate production
+
+### Deployment Pathway Flowchart
 
 ```text
 START
@@ -22,46 +30,34 @@ START
 └─────────────────────────────────────────────────────────────┘
   │ Yes                                        │ No
   ▼                                            ▼
-Prototype Mode                    ┌─────────────────────────────────────┐
-(Section 6)                       │ Does this change behavior?          │
-                                  └─────────────────────────────────────┘
-                                    │ No                     │ Yes
-                                    ▼                        ▼
-                              Minimal Risk             ┌─────────────────────────────────────┐
-                              (Section 2.1)            │ Is the change easily reversible?    │
-                                                       └─────────────────────────────────────┘
-                                                         │ Yes                  │ No
-                                                         ▼                      ▼
-                                                   Low Risk            ┌─────────────────────────────────────┐
-                                                   (Section 2.2)       │ Does it affect multiple components  │
-                                                                       │ or external interfaces?             │
-                                                                       └─────────────────────────────────────┘
-                                                                         │ No                  │ Yes
-                                                                         ▼                     ▼
-                                                                   Medium Risk        ┌─────────────────────────────────────┐
-                                                                   (Section 2.3)      │ Does it involve security, data      │
-                                                                                      │ integrity, or availability?         │
-                                                                                      └─────────────────────────────────────┘
-                                                                                        │ No             │ Yes
-                                                                                        ▼                ▼
-                                                                                  High Risk        Critical Risk
-                                                                                  (Section 3)      (Section 4)
+Prototype Path              ┌─────────────────────────────────────────┐
+(Section 2.3)               │ Do you want autonomous self-approval?   │
+                            │ (YOLO mode with checklist validation)   │
+                            └─────────────────────────────────────────┘
+                              │ Yes                    │ No
+                              ▼                        ▼
+                         YOLO Path            Streamlined Path
+                         (Section 2.2)        (Section 2.1)
+                         
+                         Agent self-approves   Production-ready changes
+                         if checklist passes   with appropriate scrutiny
 ```
 
-### Risk Classification Summary
+### Deployment Pathway Summary
 
-| Risk Level | Characteristics | Examples | Pathway |
-|------------|-----------------|----------|---------|
-| **Minimal** | No behavior change; typo/formatting | Doc typos, comment updates, formatting | Section 2.1 |
-| **Low** | Additive only; easily reversible | New tests, new docs, config defaults | Section 2.2 |
-| **Medium** | Behavior change within component | Bug fixes, refactors, internal API changes | Section 2.3 |
-| **High** | Cross-component or user-visible | Feature additions, external API changes | Section 3 |
-| **Critical** | Security, data, or availability | Auth changes, data migrations, prod config | Section 4 |
-| **Prototype** | POC/spike/experimental (not production) | Feasibility studies, technology evaluation | Section 6 |
+| Pathway | Use For | Process | Trust Level Required | Section |
+|---------|---------|---------|---------------------|---------|
+| **Streamlined** | All production-ready changes (consolidates former Minimal/Low/Medium/High/Critical risk levels) | Appropriate scrutiny based on change scope | Guided+ | Section 2.1 |
+| **YOLO** | Autonomous self-approval mode with checklist enforcement | Agent self-approves if ChecklistEnforcer passes | Autonomous+ | Section 2.2 |
+| **Prototype** | POC/spike/experimental work (not for immediate production) | Relaxed gates, Keep/Flex/Unknown tagging | Guided+ | Section 2.3 |
+
+**Note:** The former 6-pathway system (Minimal, Low, Medium, High, Critical, Prototype) has been consolidated into these 3 pathways. The Streamlined path now handles all production-ready changes with appropriate scrutiny based on scope.
 
 ---
 
-## 2. Streamlined Pathways (Minimal/Low/Medium Risk)
+## 2. Three Deployment Pathways
+
+### 2.1 Streamlined Path — Production-Ready Changes
 
 ### 2.1 Minimal Risk Path (5 min)
 
