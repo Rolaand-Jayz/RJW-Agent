@@ -120,6 +120,8 @@ class VSCodeBridgeProvider(LLMProvider):
             
             # Wait for response on stdin
             # The VS Code extension should pipe the response here
+            # NOTE: This blocks indefinitely if extension doesn't respond.
+            # For production use, consider implementing timeout or non-blocking I/O.
             response_line = sys.stdin.readline()
             
             if not response_line:

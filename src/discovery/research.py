@@ -569,8 +569,14 @@ Please provide:
 Format your response as JSON with keys: "summary" and "insights" (array of strings)"""
                     
                     schema = {
-                        "summary": "string",
-                        "insights": ["string"]
+                        "type": "object",
+                        "properties": {
+                            "summary": {"type": "string"},
+                            "insights": {
+                                "type": "array",
+                                "items": {"type": "string"}
+                            }
+                        }
                     }
                     
                     result = self.llm_provider.generate_json(prompt, schema)
