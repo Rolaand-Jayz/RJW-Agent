@@ -4,8 +4,13 @@ Interactive REPL for the RJW-IDD CLI.
 Provides a conversational interface similar to Claude, Gemini, and other AI CLIs.
 """
 import sys
-import readline  # For command history and editing
 from typing import Optional
+
+# Try to import readline for command history (not available on all platforms)
+try:
+    import readline
+except ImportError:
+    readline = None  # Command history won't be available
 
 from .session import Session
 from .formatter import Formatter

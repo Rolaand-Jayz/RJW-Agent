@@ -11,6 +11,8 @@ from . import __version__
 from .interactive import InteractiveREPL
 from .session import Session
 from .formatter import Formatter
+from ..interaction.optimizer import PromptOptimizer
+from ..governance.manager import GovernanceManager, TrustLevel
 
 
 def main():
@@ -191,9 +193,6 @@ def handle_run(args):
     Returns:
         Exit code
     """
-    from ..interaction.optimizer import PromptOptimizer
-    from ..governance.manager import GovernanceManager, TrustLevel
-    
     formatter = Formatter(use_colors=not args.no_color)
     
     try:

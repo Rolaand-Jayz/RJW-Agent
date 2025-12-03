@@ -4,6 +4,7 @@ Session management for the RJW-IDD CLI.
 Handles conversation history, context persistence, and multi-turn interactions.
 """
 import json
+import random
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -48,7 +49,6 @@ class Session:
     
     def _generate_session_id(self) -> str:
         """Generate a unique session ID."""
-        import random
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         random_suffix = ''.join(random.choices('0123456789abcdef', k=6))
         return f"session_{timestamp}_{random_suffix}"
