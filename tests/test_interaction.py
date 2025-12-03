@@ -43,8 +43,8 @@ class TestPromptOptimizer:
         assert result['status'] == 'research_complete'
         assert len(result['research_topics']) > 0
         assert len(result['evidence_ids']) > 0
+        # Should extract at least 'authentication' from the input
         assert 'authentication' in result['research_topics']
-        # API is case-sensitive in keyword matching, but authentication should be found
     
     def test_process_user_input_generates_evidence(self, optimizer):
         """Test that processing user input generates evidence files."""
