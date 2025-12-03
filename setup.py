@@ -43,4 +43,9 @@ setup(
         "": ["*.md", "*.txt"],
     },
     include_package_data=True,
+    entry_points={
+        "console_scripts": [
+            "rjw=src.cli.main:main",
+        ],
+    },
 )
