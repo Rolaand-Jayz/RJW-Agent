@@ -152,23 +152,26 @@ class TestGovernanceManager:
     
     def test_trust_authorization_levels(self, manager_standard):
         """Test trust level authorization for different risk levels."""
-        # Supervised: only minimal
-        assert manager_standard._check_trust_authorization('minimal') is True
-        assert manager_standard._check_trust_authorization('low') is False
-        assert manager_standard._check_trust_authorization('high') is False
-        
-        # Guided: minimal and low
-        manager_standard.set_trust_level(TrustLevel.GUIDED)
+        # Supervised: minimal and low (updated for new authorization)
         assert manager_standard._check_trust_authorization('minimal') is True
         assert manager_standard._check_trust_authorization('low') is True
         assert manager_standard._check_trust_authorization('medium') is False
+        assert manager_standard._check_trust_authorization('high') is False
         
-        # Autonomous: minimal, low, medium
-        manager_standard.set_trust_level(TrustLevel.AUTONOMOUS)
+        # Guided: minimal, low, medium
+        manager_standard.set_trust_level(TrustLevel.GUIDED)
+        assert manager_standard._check_trust_authorization('minimal') is True
+        assert manager_standard._check_trust_authorization('low') is True
         assert manager_standard._check_trust_authorization('medium') is True
         assert manager_standard._check_trust_authorization('high') is False
         
-        # Trusted Partner: all levels
+        # Autonomous: minimal, low, medium, high, streamlined, prototype
+        manager_standard.set_trust_level(TrustLevel.AUTONOMOUS)
+        assert manager_standard._check_trust_authorization('medium') is True
+        assert manager_standard._check_trust_authorization('high') is True
+        assert manager_standard._check_trust_authorization('critical') is False
+        
+        # Trusted Partner: all levels including critical and yolo
         manager_standard.set_trust_level(TrustLevel.TRUSTED_PARTNER)
         assert manager_standard._check_trust_authorization('high') is True
         assert manager_standard._check_trust_authorization('critical') is True
@@ -195,3 +198,121 @@ class TestGovernanceManager:
         # Test limit
         limited = manager_standard.get_approval_history(limit=1)
         assert len(limited) == 1
+
+
+class TestRiskClassifierThreePathways:
+    """Test suite for RiskClassifier with three-pathway system."""
+    
+    def test_import_risk_level(self):
+        """Test that RiskLevel enum can be imported."""
+        from src.governance.manager import RiskLevel
+        assert hasattr(RiskLevel, 'STREAMLINED')
+        assert hasattr(RiskLevel, 'YOLO')
+        assert hasattr(RiskLevel, 'PROTOTYPE')
+    
+    def test_import_risk_classifier(self):
+        """Test that RiskClassifier can be imported."""
+        from src.governance.manager import RiskClassifier
+        classifier = RiskClassifier()
+        assert classifier is not None
+    
+    def test_classify_prototype(self):
+        """Test classification of prototype work."""
+        from src.governance.manager import RiskClassifier, RiskLevel
+        classifier = RiskClassifier()
+        
+        change = {'is_prototype': True}
+        result = classifier.classify(change)
+        assert result == RiskLevel.PROTOTYPE
+    
+    def test_classify_yolo(self):
+        """Test classification of YOLO mode."""
+        from src.governance.manager import RiskClassifier, RiskLevel
+        classifier = RiskClassifier()
+        
+        change = {'yolo_mode': True, 'is_prototype': False}
+        result = classifier.classify(change)
+        assert result == RiskLevel.YOLO
+    
+    def test_classify_streamlined_default(self):
+        """Test that streamlined is the default for production changes."""
+        from src.governance.manager import RiskClassifier, RiskLevel
+        classifier = RiskClassifier()
+        
+        change = {'is_prototype': False, 'yolo_mode': False}
+        result = classifier.classify(change)
+        assert result == RiskLevel.STREAMLINED
+    
+    def test_classify_empty_change_defaults_to_streamlined(self):
+        """Test that empty change dict defaults to streamlined."""
+        from src.governance.manager import RiskClassifier, RiskLevel
+        classifier = RiskClassifier()
+        
+        result = classifier.classify({})
+        assert result == RiskLevel.STREAMLINED
+    
+    def test_get_pathway_streamlined(self):
+        """Test pathway documentation for streamlined."""
+        from src.governance.manager import RiskClassifier, RiskLevel
+        classifier = RiskClassifier()
+        
+        pathway = classifier.get_pathway(RiskLevel.STREAMLINED)
+        assert 'Section 2.1' in pathway
+        assert 'Streamlined' in pathway
+    
+    def test_get_pathway_yolo(self):
+        """Test pathway documentation for YOLO."""
+        from src.governance.manager import RiskClassifier, RiskLevel
+        classifier = RiskClassifier()
+        
+        pathway = classifier.get_pathway(RiskLevel.YOLO)
+        assert 'Section 2.2' in pathway
+        assert 'YOLO' in pathway
+    
+    def test_get_pathway_prototype(self):
+        """Test pathway documentation for prototype."""
+        from src.governance.manager import RiskClassifier, RiskLevel
+        classifier = RiskClassifier()
+        
+        pathway = classifier.get_pathway(RiskLevel.PROTOTYPE)
+        assert 'Section 2.3' in pathway
+        assert 'Prototype' in pathway
+    
+    def test_trust_authorization_streamlined(self):
+        """Test trust authorization for streamlined pathway."""
+        manager = GovernanceManager(yolo_mode=False, trust_level=TrustLevel.GUIDED)
+        
+        # Guided level should authorize streamlined
+        assert manager._check_trust_authorization('streamlined') is True
+        
+        # But supervised should not
+        manager.set_trust_level(TrustLevel.SUPERVISED)
+        assert manager._check_trust_authorization('streamlined') is False
+    
+    def test_trust_authorization_yolo(self):
+        """Test trust authorization for YOLO pathway."""
+        manager = GovernanceManager(yolo_mode=False, trust_level=TrustLevel.AUTONOMOUS)
+        
+        # Autonomous level should authorize YOLO
+        assert manager._check_trust_authorization('yolo') is True
+        
+        # But guided should not
+        manager.set_trust_level(TrustLevel.GUIDED)
+        assert manager._check_trust_authorization('yolo') is False
+    
+    def test_trust_authorization_prototype(self):
+        """Test trust authorization for prototype pathway."""
+        manager = GovernanceManager(yolo_mode=False, trust_level=TrustLevel.GUIDED)
+        
+        # Guided level should authorize prototype
+        assert manager._check_trust_authorization('prototype') is True
+    
+    def test_backward_compatibility_old_risk_levels(self):
+        """Test backward compatibility with old risk levels."""
+        manager = GovernanceManager(yolo_mode=False, trust_level=TrustLevel.AUTONOMOUS)
+        
+        # Old risk levels should still work
+        assert manager._check_trust_authorization('minimal') is True
+        assert manager._check_trust_authorization('low') is True
+        assert manager._check_trust_authorization('medium') is True
+        assert manager._check_trust_authorization('high') is True
