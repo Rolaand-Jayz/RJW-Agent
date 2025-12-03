@@ -142,3 +142,73 @@ class TestPromptOptimizer:
         optimizer.process_user_input("Test workflow")
         summary = optimizer.get_workflow_summary()
         assert summary['evidence_count'] > 0
+    
+    def test_process_user_research_standard_priority(self, optimizer):
+        """Test processing user-provided research with standard priority."""
+        user_research = """
+# Security Best Practices
+
+Key findings:
+- Always use HTTPS
+- Implement rate limiting
+- Validate all inputs
+        """
+        
+        result = optimizer.process_user_research(user_research, user_priority=False)
+        
+        assert result['status'] == 'user_research_processed'
+        assert result['evd_id'].startswith('EVD-')
+        assert result['user_priority'] is False
+        assert 'standard priority' in result['priority_explanation']
+    
+    def test_process_user_research_elevated_priority(self, optimizer):
+        """Test processing user research with explicit elevated priority."""
+        user_research = "Critical security vulnerability found in authentication module."
+        
+        result = optimizer.process_user_research(user_research, user_priority=True)
+        
+        assert result['status'] == 'user_research_processed'
+        assert result['user_priority'] is True
+        assert 'elevated' in result['priority_explanation'].lower()
+    
+    def test_process_user_research_updates_workflow_state(self, optimizer):
+        """Test that user research updates workflow state."""
+        initial_count = len(optimizer.workflow_state['evidence_ids'])
+        
+        optimizer.process_user_research("Test research finding")
+        
+        new_count = len(optimizer.workflow_state['evidence_ids'])
+        assert new_count == initial_count + 1
+    
+    def test_process_user_research_empty_raises_error(self, optimizer):
+        """Test that empty user research raises error."""
+        with pytest.raises(ValueError, match="User research content cannot be empty"):
+            optimizer.process_user_research("")
+    
+    def test_process_user_research_various_formats(self, optimizer):
+        """Test user research with various input formats."""
+        # Plain text
+        result1 = optimizer.process_user_research(
+            "Simple finding: the system needs better error handling."
+        )
+        assert result1['evd_id'].startswith('EVD-')
+        
+        # Bullet points
+        result2 = optimizer.process_user_research("""
+        * Finding one
+        * Finding two
+        * Finding three
+        """)
+        assert result2['evd_id'].startswith('EVD-')
+        
+        # Markdown with sections
+        result3 = optimizer.process_user_research("""
+## Research Findings
+
+Summary of the research.
+
+## Conclusions
+
+Key takeaways from analysis.
+        """)
+        assert result3['evd_id'].startswith('EVD-')

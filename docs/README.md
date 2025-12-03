@@ -11,7 +11,7 @@ See `rjw-idd-methodology/` for the **five core METHOD files**:
 | Document | Path | Purpose |
 |----------|------|---------|
 | **Core Method** | `core/METHOD-0001-core-method.md` | Foundational principles and lifecycle |
-| **Unified Lifecycle & Checklists** | `governance/METHOD-0002-phase-driver-checklists.md` | All process checklists (Standard, Streamlined, Prototype) |
+| **Unified Lifecycle & Checklists** | `governance/METHOD-0002-phase-driver-checklists.md` | Three deployment pathways: Streamlined, YOLO, and Prototype |
 | **Role Handbook** | `governance/METHOD-0003-role-handbook.md` | Role definitions and responsibilities |
 | **Unified Agent Handbook** | `operations/METHOD-0004-ai-agent-workflows.md` | All AI agent rules, trust framework, and behaviors |
 | **Operations Support** | `operations/METHOD-0005-operations-production-support.md` | Post-deployment and production support |

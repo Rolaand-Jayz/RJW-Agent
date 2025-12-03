@@ -152,6 +152,60 @@ class PromptOptimizer:
         
         return topics
     
+    def process_user_research(self, research_content: str, 
+                             user_priority: bool = False,
+                             curator: str = "User") -> Dict:
+        """
+        Process user-provided research and automatically parse/reformat it.
+        
+        This method:
+        1. Detects that user has provided research directly
+        2. Automatically parses the research regardless of format
+        3. Reformats to EVD-#### standard template
+        4. Registers the evidence with appropriate priority
+        
+        User research receives equal weight as agent research by default.
+        User research receives higher weight ONLY when user_priority=True.
+        
+        Args:
+            research_content: User-provided research in any format
+            user_priority: If True, user explicitly wants elevated priority (default: False)
+            curator: Name of person providing research
+            
+        Returns:
+            Dictionary containing:
+            - evd_id: Generated evidence ID
+            - status: Processing status
+            - user_priority: Whether elevated priority was set
+            - message: Success message
+            
+        Raises:
+            ValueError: If research_content is empty
+        """
+        if not research_content or not research_content.strip():
+            raise ValueError("User research content cannot be empty")
+        
+        # Harvest user research using automatic parsing and reformatting
+        evd_id = self.research_harvester.harvest_user_research(
+            raw_input=research_content,
+            user_priority=user_priority,
+            curator=curator
+        )
+        
+        # Update workflow state
+        self.workflow_state['evidence_ids'].append(evd_id)
+        
+        priority_msg = "elevated priority (user-specified)" if user_priority else "standard priority (equal weight)"
+        
+        return {
+            'status': 'user_research_processed',
+            'evd_id': evd_id,
+            'user_priority': user_priority,
+            'priority_explanation': priority_msg,
+            'message': f"User research automatically parsed and formatted as {evd_id} with {priority_msg}.",
+            'note': "User-provided research has been reformatted to EVD template structure while preserving all original content."
+        }
+    
     def _generate_recommendations(self, user_input: str, evidence_ids: List[str]) -> str:
         """
         Generate recommendations based on research findings.
