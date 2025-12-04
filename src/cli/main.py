@@ -4,8 +4,10 @@ Main CLI entry point for RJW-IDD Agent.
 Provides command-line interface similar to Google Gemini, Claude, and other AI CLIs.
 """
 import argparse
+import os
 import sys
 from pathlib import Path
+from typing import Optional
 
 from . import __version__
 from .interactive import InteractiveREPL
@@ -13,6 +15,7 @@ from .session import Session
 from .formatter import Formatter
 from ..interaction.optimizer import PromptOptimizer
 from ..governance.manager import GovernanceManager, TrustLevel
+from ..brain import get_provider, LLMProvider
 
 
 def main():
@@ -72,6 +75,20 @@ For more information, visit: https://github.com/Rolaand-Jayz/RJW-Agent
         action='store_true',
         help='Disable colored output'
     )
+    chat_parser.add_argument(
+        '--provider',
+        choices=['openai', 'gemini', 'vscode'],
+        default='openai',
+        help='LLM provider to use (default: openai)'
+    )
+    chat_parser.add_argument(
+        '--api-key',
+        help='API key for LLM provider (or use environment variable)'
+    )
+    chat_parser.add_argument(
+        '--model',
+        help='Model identifier for the selected provider'
+    )
     
     # Run command (one-shot)
     run_parser = subparsers.add_parser(
@@ -97,6 +114,20 @@ For more information, visit: https://github.com/Rolaand-Jayz/RJW-Agent
         '--no-color',
         action='store_true',
         help='Disable colored output'
+    )
+    run_parser.add_argument(
+        '--provider',
+        choices=['openai', 'gemini', 'vscode'],
+        default='openai',
+        help='LLM provider to use (default: openai)'
+    )
+    run_parser.add_argument(
+        '--api-key',
+        help='API key for LLM provider (or use environment variable)'
+    )
+    run_parser.add_argument(
+        '--model',
+        help='Model identifier for the selected provider'
     )
     
     # Sessions command
@@ -164,6 +195,11 @@ def handle_chat(args):
     trust_level = getattr(args, 'trust', 'SUPERVISED')
     no_color = getattr(args, 'no_color', False)
     
+    # Initialize LLM provider
+    provider = initialize_provider(args)
+    if provider:
+        print(f"✓ Initialized {args.provider} provider")
+    
     # Create and start REPL
     repl = InteractiveREPL(
         session_id=session_id,
@@ -196,6 +232,11 @@ def handle_run(args):
     formatter = Formatter(use_colors=not args.no_color)
     
     try:
+        # Initialize LLM provider
+        provider = initialize_provider(args)
+        if provider:
+            print(formatter.success(f"✓ Initialized {args.provider} provider"))
+        
         # Initialize components
         optimizer = PromptOptimizer(
             research_output_dir=".rjw-output/research",
@@ -306,6 +347,66 @@ def handle_sessions(args):
     except Exception as e:
         print(formatter.error(f"Error: {e}"), file=sys.stderr)
         return 1
+
+
+def get_api_key(provider: str, cli_key: Optional[str]) -> Optional[str]:
+    """
+    Get API key from CLI argument or environment variable.
+    
+    Args:
+        provider: Provider name (openai, gemini, vscode)
+        cli_key: API key from CLI argument (if provided)
+        
+    Returns:
+        API key string or None
+    """
+    if cli_key:
+        return cli_key
+    
+    # Check environment variables based on provider
+    env_var_map = {
+        'openai': 'OPENAI_API_KEY',
+        'gemini': 'GOOGLE_API_KEY',
+        'vscode': None  # VS Code doesn't need an API key
+    }
+    
+    env_var = env_var_map.get(provider.lower())
+    if env_var:
+        return os.environ.get(env_var)
+    
+    return None
+
+
+def initialize_provider(args) -> Optional[LLMProvider]:
+    """
+    Create provider instance from CLI arguments.
+    
+    Args:
+        args: Parsed command-line arguments
+        
+    Returns:
+        LLMProvider instance or None if provider args not present
+    """
+    # Check if provider arguments exist (they might not for all commands)
+    if not hasattr(args, 'provider'):
+        return None
+    
+    provider_name = args.provider
+    api_key = get_api_key(provider_name, getattr(args, 'api_key', None))
+    
+    # Build kwargs for provider
+    kwargs = {}
+    if hasattr(args, 'model') and args.model:
+        kwargs['model'] = args.model
+    
+    try:
+        provider = get_provider(provider_name, api_key=api_key, **kwargs)
+        return provider
+    except Exception as e:
+        # If provider initialization fails, print warning but continue
+        # (the CLI can still work without LLM integration)
+        print(f"Warning: Could not initialize LLM provider: {e}", file=sys.stderr)
+        return None
 
 
 if __name__ == '__main__':
