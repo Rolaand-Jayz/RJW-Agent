@@ -23,6 +23,8 @@ class OpenAIProvider(LLMProvider):
         Args:
             api_key: OpenAI API key (or use OPENAI_API_KEY env var)
             model: Model identifier (default: gpt-4)
+                  Note: gpt-4 is powerful but more expensive. Consider using
+                  'gpt-3.5-turbo' for cost-sensitive applications.
             **kwargs: Additional OpenAI client options
         """
         self.model = model
@@ -62,7 +64,11 @@ class OpenAIProvider(LLMProvider):
         return response.choices[0].message.content
 
     def generate_json(
-        self, prompt: str, schema: Dict[str, Any], system_prompt: Optional[str] = None
+        self,
+        prompt: str,
+        schema: Dict[str, Any],
+        system_prompt: Optional[str] = None,
+        temperature: float = 0.7,
     ) -> Dict[str, Any]:
         """
         Generate structured JSON response using OpenAI's JSON mode.
@@ -71,9 +77,13 @@ class OpenAIProvider(LLMProvider):
             prompt: User prompt/input text
             schema: JSON schema for response format
             system_prompt: Optional system instructions
+            temperature: Sampling temperature (0.0-1.0)
 
         Returns:
             Structured JSON response as dictionary
+
+        Raises:
+            ValueError: If response is invalid or cannot be parsed
         """
         messages = []
 
@@ -95,8 +105,16 @@ class OpenAIProvider(LLMProvider):
             model=self.model,
             messages=messages,
             response_format={"type": "json_object"},
-            temperature=0.7,
+            temperature=temperature,
         )
 
+        # Validate response
+        if not response.choices or not response.choices[0].message.content:
+            raise ValueError("OpenAI returned empty or invalid response")
+
         content = response.choices[0].message.content
-        return json.loads(content)
+
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Failed to parse JSON response from OpenAI: {e}") from e

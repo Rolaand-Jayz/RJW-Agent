@@ -402,10 +402,30 @@ def initialize_provider(args) -> Optional[LLMProvider]:
     try:
         provider = get_provider(provider_name, api_key=api_key, **kwargs)
         return provider
+    except ValueError as e:
+        # Unknown provider name
+        print(f"Error: {e}", file=sys.stderr)
+        return None
     except Exception as e:
-        # If provider initialization fails, print warning but continue
-        # (the CLI can still work without LLM integration)
-        print(f"Warning: Could not initialize LLM provider: {e}", file=sys.stderr)
+        # Other errors (API authentication, network, etc.)
+        error_msg = str(e)
+        if "API key" in error_msg or "authentication" in error_msg.lower():
+            print(
+                f"Error: Authentication failed for {provider_name}. "
+                f"Check your API key or environment variable.",
+                file=sys.stderr,
+            )
+        elif "network" in error_msg.lower() or "connection" in error_msg.lower():
+            print(
+                f"Error: Network error while initializing {provider_name}. "
+                f"Check your internet connection.",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                f"Warning: Could not initialize {provider_name} provider: {e}",
+                file=sys.stderr,
+            )
         return None
 
 

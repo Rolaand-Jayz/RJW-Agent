@@ -82,6 +82,9 @@ class GeminiProvider(LLMProvider):
 
         Returns:
             Structured JSON response as dictionary
+
+        Raises:
+            ValueError: If response is invalid or cannot be parsed
         """
         # Enhance prompt with JSON instructions
         json_instruction = (
@@ -95,5 +98,12 @@ class GeminiProvider(LLMProvider):
 
         response = self.model.generate_content(enhanced_prompt)
 
+        # Validate response
+        if not hasattr(response, "text") or not response.text:
+            raise ValueError("Gemini returned empty or invalid response")
+
         # Parse the JSON from response text
-        return json.loads(response.text)
+        try:
+            return json.loads(response.text)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Failed to parse JSON response from Gemini: {e}") from e
