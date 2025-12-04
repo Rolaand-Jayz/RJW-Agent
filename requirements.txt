@@ -1,7 +1,11 @@
 # RJW-IDD Agent Framework Dependencies
 
-# Core dependencies (none required for basic functionality)
-# The framework uses only Python standard library
+# Core dependencies (optional - framework works with standard library only)
+# LLM Provider dependencies (optional - install as needed for "Brain" features)
+openai>=1.0.0                    # For OpenAI GPT models
+google-generativeai>=0.3.0       # For Google Gemini models
+tavily-python>=0.3.0             # For web research capabilities
+python-dotenv>=1.0.0             # For environment variable management
 
 # Development dependencies (optional)
 pytest>=7.0.0          # For running tests

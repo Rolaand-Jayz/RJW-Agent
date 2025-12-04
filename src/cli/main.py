@@ -43,6 +43,13 @@ For more information, visit: https://github.com/Rolaand-Jayz/RJW-Agent
         version=f'rjw {__version__}'
     )
     
+    parser.add_argument(
+        '--provider',
+        choices=['openai', 'gemini', 'vscode'],
+        default=None,
+        help='LLM provider to use (default: openai or RJW_PROVIDER env var)'
+    )
+    
     # Subcommands
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
     
@@ -163,12 +170,14 @@ def handle_chat(args):
     yolo_mode = getattr(args, 'yolo', False)
     trust_level = getattr(args, 'trust', 'SUPERVISED')
     no_color = getattr(args, 'no_color', False)
+    provider = getattr(args, 'provider', None)
     
     # Create and start REPL
     repl = InteractiveREPL(
         session_id=session_id,
         yolo_mode=yolo_mode,
-        trust_level=trust_level
+        trust_level=trust_level,
+        provider=provider
     )
     
     # Disable colors if requested
@@ -196,11 +205,14 @@ def handle_run(args):
     formatter = Formatter(use_colors=not args.no_color)
     
     try:
+        provider = getattr(args, 'provider', None)
+        
         # Initialize components
         optimizer = PromptOptimizer(
             research_output_dir=".rjw-output/research",
             specs_output_dir=".rjw-output/specs",
-            decisions_output_dir=".rjw-output/decisions"
+            decisions_output_dir=".rjw-output/decisions",
+            provider=provider
         )
         
         trust_level_enum = TrustLevel[args.trust]
