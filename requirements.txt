@@ -1,7 +1,10 @@
 # RJW-IDD Agent Framework Dependencies
 
-# Core dependencies (none required for basic functionality)
-# The framework uses only Python standard library
+# Core dependencies
+openai>=1.0.0                    # OpenAI API integration
+google-generativeai>=0.3.0       # Google Gemini API integration
+tavily-python>=0.3.0             # Research and search capabilities
+python-dotenv>=1.0.0             # Environment variable management
 
 # Development dependencies (optional)
 pytest>=7.0.0          # For running tests
