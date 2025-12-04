@@ -114,6 +114,7 @@ class GeminiProvider(LLMProvider):
                 # Remove first line (opening fence, e.g., "```json")
                 lines = lines[1:]
                 # Remove last line if it's a closing fence
+                # Using startswith to handle cases like "```\n" or "``` \n"
                 if lines and lines[-1].strip().startswith("```"):
                     lines = lines[:-1]
                 content = "\n".join(lines).strip()

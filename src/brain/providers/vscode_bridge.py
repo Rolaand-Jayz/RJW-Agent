@@ -136,9 +136,23 @@ class VSCodeBridgeProvider(LLMProvider):
                     )
                 response_line = sys.stdin.readline()
             else:
-                # Windows fallback - stdin.readline() blocks indefinitely
-                # For Windows, users should ensure the VS Code extension responds
-                response_line = sys.stdin.readline()
+                # Windows implementation using threading for timeout
+                import threading
+                response_container = []
+                
+                def read_line():
+                    response_container.append(sys.stdin.readline())
+                
+                thread = threading.Thread(target=read_line, daemon=True)
+                thread.start()
+                thread.join(timeout=self.timeout)
+                
+                if not response_container:
+                    raise TimeoutError(
+                        f"No response received from VS Code extension within {self.timeout} seconds. "
+                        "Ensure the VS Code extension is running and monitoring stdout."
+                    )
+                response_line = response_container[0]
             
             if not response_line:
                 raise Exception("No response received from VS Code extension")
