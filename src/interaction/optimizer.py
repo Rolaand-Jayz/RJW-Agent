@@ -47,8 +47,11 @@ class PromptOptimizer:
         self.research_harvester = ResearchHarvester(research_output_dir)
         self.template_manager = TemplateManager()
         
-        # Initialize Context Curation Engine (METHOD-0006)
-        # This is the ONLY source of context during implementation
+        # Initialize Context Curation Engine implementing METHOD-0006 framework:
+        # - Section 2: Complete Context Index structure
+        # - Section 3: Turn-based evaluation and relevance scoring
+        # - Section 4: Context update triggers and propagation
+        # - Section 5: Living Documentation integration
         self.context_curator = ContextCurator(project_root)
         
         self.specs_output_dir = Path(specs_output_dir)
@@ -349,14 +352,20 @@ Remember: In RJW-IDD, every decision and specification must be backed by evidenc
                                       task_id: str,
                                       focus_areas: List[str]) -> Dict:
         """
-        Prepare implementation context using the Context Curation Engine.
+        Prepare implementation context using the Context Curation Engine (METHOD-0006).
         
-        This method enforces METHOD-0006: The context engine is the ONLY source
-        of context during implementation. It uses static analysis to:
-        - Find related code elements
-        - Extract signatures (not full implementations)
-        - Build a Context Index (CTX-####)
-        - Provide only relevant context
+        This method implements METHOD-0006 Context Curation Engine:
+        - Section 2: Creates complete Context Index with all required sections
+        - Section 3: Applies relevance scoring (0.0-1.0) to context items
+        - Uses static analysis to find related code elements
+        - Extracts signatures only, not full implementations
+        
+        The Context Index includes:
+        - Task Scope (objectives, constraints)
+        - Affected Areas (files, modules, endpoints)
+        - Technical Context (decisions, specs, conventions)
+        - Assumptions and dependencies
+        - Context items with relevance scores
         
         Args:
             task_id: Unique identifier for the implementation task
@@ -367,11 +376,11 @@ Remember: In RJW-IDD, every decision and specification must be backed by evidenc
             - ctx_id: Context index ID
             - related_files: List of files in scope
             - signatures: List of relevant code signatures
-            - slicing_method: 'static_analysis' (no LLM)
+            - method: 'static_analysis' (no LLM)
             
         Note:
-            This method returns ONLY signatures and metadata, NOT full file contents.
-            This enforces the "code slicing" requirement from METHOD-0006.
+            This returns ONLY signatures and metadata, NOT full file contents.
+            For turn-based context curation, use evaluate_context_on_turn().
         """
         # Build context index using static analysis (no LLM)
         ctx_id = self.context_curator.build_context_index(task_id, focus_areas)
@@ -399,13 +408,18 @@ Remember: In RJW-IDD, every decision and specification must be backed by evidenc
         """
         Retrieve implementation context by Context Index ID.
         
-        This is the ONLY way to access context during implementation.
+        Returns the complete METHOD-0006 Context Index with all sections:
+        - Task Scope, Affected Areas, Technical Context
+        - Assumptions, Dependencies, Change History
+        - Context items with relevance scores
+        
+        This is the recommended way to access context during implementation.
         
         Args:
             ctx_id: Context index ID
             
         Returns:
-            Context data or None if not found
+            Complete Context Index data or None if not found
         """
         return self.context_curator.get_context(ctx_id)
     
@@ -413,10 +427,10 @@ Remember: In RJW-IDD, every decision and specification must be backed by evidenc
                            file_path: str,
                            element_names: List[str]) -> Dict[str, str]:
         """
-        Slice specific code elements from a file.
+        Slice specific code elements from a file using AST analysis.
         
         Returns ONLY signatures, not full implementations.
-        This enforces METHOD-0006 code slicing requirements.
+        This uses static analysis to extract code signatures.
         
         Args:
             file_path: Path to the file
@@ -426,3 +440,49 @@ Remember: In RJW-IDD, every decision and specification must be backed by evidenc
             Dictionary mapping element names to their signatures
         """
         return self.context_curator.slice_code(file_path, element_names)
+    
+    def evaluate_context_on_turn(self, ctx_id: str) -> Dict:
+        """
+        Perform turn-based context evaluation per METHOD-0006 Section 3.1.
+        
+        Implements the evaluation cycle:
+        1. EVALUATE - Assess current context validity
+        2. REMOVE - Drop stale or irrelevant items (score < 0.2)
+        3. LOAD - Pull missing relevant info
+        4. PROCEED - Execute with curated context
+        
+        Args:
+            ctx_id: Context Index ID to evaluate
+            
+        Returns:
+            Dictionary with evaluation results (evaluated, removed, kept counts)
+        """
+        return self.context_curator.evaluate_context_on_turn(ctx_id)
+    
+    def update_context_on_change(self, 
+                                ctx_id: str,
+                                change_type: str,
+                                description: str,
+                                affected_items: Optional[List[str]] = None) -> bool:
+        """
+        Update Context Index based on detected changes per METHOD-0006 Section 4.
+        
+        Implements context update triggers for:
+        - File added/modified
+        - Decision created/updated (DEC-####)
+        - Spec updated (SPEC-####)
+        - API change
+        - Dependency change
+        
+        Args:
+            ctx_id: Context Index ID
+            change_type: Type of change ('file', 'decision', 'spec', 'api', 'dependency')
+            description: Description of the change
+            affected_items: Optional list of affected items
+            
+        Returns:
+            True if update successful
+        """
+        return self.context_curator.update_context_on_change(
+            ctx_id, change_type, description, affected_items
+        )

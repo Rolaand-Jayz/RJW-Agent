@@ -45,8 +45,12 @@ class InteractiveREPL:
         self.session = Session(session_id)
         self.formatter = Formatter()
         
-        # Initialize RJW-IDD components with context engine
-        # The context engine is the ONLY source of context during implementation (METHOD-0006)
+        # Initialize RJW-IDD components with Context Curation Engine (METHOD-0006)
+        # The context engine implements the full METHOD-0006 framework:
+        # - Section 2: Complete Context Index structure
+        # - Section 3: Turn-based evaluation and relevance scoring
+        # - Section 4: Context update triggers and propagation
+        # - Section 5: Living Documentation integration
         self.optimizer = PromptOptimizer(
             research_output_dir=f".rjw-sessions/{self.session.session_id}/research",
             specs_output_dir=f".rjw-sessions/{self.session.session_id}/specs",
@@ -236,8 +240,8 @@ class InteractiveREPL:
         print("  AI-assisted software development with research-driven decisions.")
         print()
         print(self.formatter.section("Context Engine (METHOD-0006):"))
-        print("  The Context Curation Engine is the ONLY source of context during")
-        print("  implementation. Use /context to prepare task-specific context indexes.")
+        print("  The Context Curation Engine implements the METHOD-0006 framework for")
+        print("  context management. Use /context to prepare task-specific context indexes.")
         print()
     
     def _cmd_status(self, args: str):
@@ -340,8 +344,14 @@ class InteractiveREPL:
         Usage: /context <task_id> <focus_areas>
         Example: /context TASK-001 authentication,authorization
         
-        This creates a Context Index (CTX-####) following METHOD-0006,
-        which is the ONLY source of context during implementation.
+        This creates a complete Context Index (CTX-####) per METHOD-0006 Section 2.2:
+        - Task Scope (objectives, constraints)
+        - Affected Areas (files, modules, endpoints)
+        - Technical Context (decisions, specs, conventions)
+        - Assumptions and dependencies
+        - Context items with relevance scores (Section 3.3)
+        
+        Use evaluate_context_on_turn() for turn-based curation (Section 3.1).
         """
         if not args:
             print(self.formatter.error("Usage: /context <task_id> <focus_areas>"))
@@ -372,8 +382,8 @@ class InteractiveREPL:
             print(self.formatter.list_item(f"Signatures Extracted: {result['signature_count']}"))
             print(self.formatter.list_item(f"Method: {result['method']} (no LLM)"))
             print()
-            print(self.formatter.dim("Note: Context engine provides ONLY relevant signatures, not full files"))
-            print(self.formatter.dim("This is the ONLY source of context during implementation (METHOD-0006)"))
+            print(self.formatter.dim("Note: Context engine uses static analysis to provide relevant signatures"))
+            print(self.formatter.dim("This implements the complete METHOD-0006 framework for context management"))
             print()
         except Exception as e:
             print(self.formatter.error(f"Error: {str(e)}"))

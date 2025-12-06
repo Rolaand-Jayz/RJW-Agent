@@ -231,14 +231,35 @@ The CLI supports four trust levels from the RJW-IDD methodology:
 
 YOLO mode enables automatic self-approval when checklist requirements are met, allowing faster iteration while maintaining governance.
 
-### Context Curation Engine
+### Context Curation Engine (METHOD-0006)
 
-The Context Curation Engine (METHOD-0006) is the **ONLY** source of context during implementation. It uses static analysis to:
+The Context Curation Engine implements the complete METHOD-0006 framework for context management:
 
-- Find related code elements without LLM inference
-- Extract signatures, not full file contents
-- Build task-specific Context Indexes (CTX-####)
-- Provide only relevant context based on focus areas
+**Section 2: Context Index Structure**
+- Task Scope (objectives, constraints)
+- Affected Areas (files, modules, endpoints)
+- Technical Context (decisions, specs, conventions)
+- Assumptions and dependencies
+- Change history tracking
+
+**Section 3: Turn-Based Context Curation**
+- Context evaluation cycle (EVALUATE → REMOVE → LOAD → PROCEED)
+- Relevance scoring (0.0-1.0) for all context items
+- Automatic filtering of low-relevance items (score < 0.2)
+
+**Section 4: Context Update Triggers**
+- File modifications, decision/spec updates
+- Automatic propagation to affected contexts
+- Change history tracking
+
+**Section 5: Living Documentation Integration**
+- Technologies, architecture, conventions
+- Project-specific rules and constraints
+
+**Implementation Details:**
+- Uses static analysis (AST) to find related code elements
+- Extracts signatures only, not full file contents
+- No LLM inference for context selection
 
 **Example Usage:**
 
@@ -251,10 +272,10 @@ rjw
 
 # Context Index Created: CTX-TASK-001
 # Related Files: 5
-# Signatures Extracted: 12 (signatures only, not full implementations)
+# Signatures Extracted: 12 (with relevance scores)
 ```
 
-The context engine enforces that agents see **only** what's relevant through programmatic analysis, preventing context bloat and ensuring focused implementation.
+The context engine helps identify relevant code through static analysis, reducing context bloat and supporting focused implementation.
 
 ## Using This Methodology
 

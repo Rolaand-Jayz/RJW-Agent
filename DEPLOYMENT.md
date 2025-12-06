@@ -77,12 +77,19 @@ Every decision and specification must be backed by evidence.
 
 ### 2. Context Curation Engine (METHOD-0006)
 
-The Context Curation Engine is the **ONLY** source of context during implementation:
+The Context Curation Engine implements the complete METHOD-0006 framework:
 
-- Uses **static analysis** (no LLM inference)
+**METHOD-0006 Components:**
+- **Section 2**: Complete Context Index structure (Task Scope, Affected Areas, Technical Context, Assumptions, Dependencies, Change History)
+- **Section 3**: Turn-based context evaluation with relevance scoring (0.0-1.0)
+- **Section 4**: Context update triggers and automatic propagation
+- **Section 5**: Living Documentation integration
+
+**Technical Implementation:**
+- Uses **static analysis** (AST) for code discovery (no LLM inference)
 - Extracts **signatures only**, not full files
 - Builds task-specific **Context Indexes** (CTX-####)
-- Provides **only relevant** context based on focus areas
+- Applies **relevance scores** (0.0-1.0) to all context items
 
 **Usage:**
 
@@ -193,8 +200,12 @@ src/
 
 1. **Evidence First**: Every decision must reference EVD-####
 2. **Traceability**: EVD → DEC → SPEC → TEST chain enforced
-3. **Context Discipline**: Context engine is ONLY source during implementation
-4. **Static Analysis**: No LLM-based context selection
+3. **METHOD-0006 Framework**: Complete context curation implementation
+   - Turn-based evaluation cycle
+   - Relevance scoring (0.0-1.0)
+   - Context update triggers and propagation
+   - Living Documentation integration
+4. **Static Analysis**: No LLM-based context selection (AST-based code discovery)
 5. **Signature Extraction**: Code slicing provides signatures, not full files
 
 ## Workflow Example
