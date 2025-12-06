@@ -8,6 +8,7 @@ from typing import Dict, List, Optional
 from pathlib import Path
 from ..discovery.research import ResearchHarvester
 from ..utils import TemplateManager
+from ..context.engine import ContextCurator
 
 
 class PromptOptimizer:
@@ -32,7 +33,8 @@ class PromptOptimizer:
     def __init__(self, 
                  research_output_dir: str = "research/evidence",
                  specs_output_dir: str = "specs",
-                 decisions_output_dir: str = "decisions"):
+                 decisions_output_dir: str = "decisions",
+                 project_root: str = "."):
         """
         Initialize the PromptOptimizer.
         
@@ -40,9 +42,14 @@ class PromptOptimizer:
             research_output_dir: Directory for evidence files
             specs_output_dir: Directory for specification files
             decisions_output_dir: Directory for decision files
+            project_root: Root directory of project for context curation
         """
         self.research_harvester = ResearchHarvester(research_output_dir)
         self.template_manager = TemplateManager()
+        
+        # Initialize Context Curation Engine (METHOD-0006)
+        # This is the ONLY source of context during implementation
+        self.context_curator = ContextCurator(project_root)
         
         self.specs_output_dir = Path(specs_output_dir)
         self.decisions_output_dir = Path(decisions_output_dir)
@@ -55,7 +62,8 @@ class PromptOptimizer:
             'research_topics': [],
             'evidence_ids': [],
             'decisions': [],
-            'specifications': []
+            'specifications': [],
+            'context_indexes': []  # Track context indexes per METHOD-0006
         }
     
     def process_user_input(self, user_input: str) -> Dict:
@@ -330,7 +338,91 @@ Remember: In RJW-IDD, every decision and specification must be backed by evidenc
             'evidence_count': len(self.workflow_state['evidence_ids']),
             'decisions_count': len(self.workflow_state['decisions']),
             'specifications_count': len(self.workflow_state['specifications']),
+            'context_indexes_count': len(self.workflow_state['context_indexes']),
             'evidence_ids': self.workflow_state['evidence_ids'],
             'decision_ids': [d['id'] for d in self.workflow_state['decisions']],
-            'spec_ids': [s['id'] for s in self.workflow_state['specifications']]
+            'spec_ids': [s['id'] for s in self.workflow_state['specifications']],
+            'context_indexes': self.workflow_state['context_indexes']
         }
+    
+    def prepare_implementation_context(self, 
+                                      task_id: str,
+                                      focus_areas: List[str]) -> Dict:
+        """
+        Prepare implementation context using the Context Curation Engine.
+        
+        This method enforces METHOD-0006: The context engine is the ONLY source
+        of context during implementation. It uses static analysis to:
+        - Find related code elements
+        - Extract signatures (not full implementations)
+        - Build a Context Index (CTX-####)
+        - Provide only relevant context
+        
+        Args:
+            task_id: Unique identifier for the implementation task
+            focus_areas: List of code areas/modules relevant to the task
+            
+        Returns:
+            Dictionary containing:
+            - ctx_id: Context index ID
+            - related_files: List of files in scope
+            - signatures: List of relevant code signatures
+            - slicing_method: 'static_analysis' (no LLM)
+            
+        Note:
+            This method returns ONLY signatures and metadata, NOT full file contents.
+            This enforces the "code slicing" requirement from METHOD-0006.
+        """
+        # Build context index using static analysis (no LLM)
+        ctx_id = self.context_curator.build_context_index(task_id, focus_areas)
+        
+        # Retrieve context
+        context_data = self.context_curator.get_context(ctx_id)
+        
+        # Store in workflow state
+        self.workflow_state['context_indexes'].append(ctx_id)
+        
+        return {
+            'status': 'context_prepared',
+            'ctx_id': ctx_id,
+            'task_id': task_id,
+            'focus_areas': focus_areas,
+            'related_files': context_data['related_files'],
+            'signature_count': len(context_data['signatures']),
+            'signatures': context_data['signatures'][:10],  # Return first 10 for preview
+            'method': 'static_analysis',
+            'note': 'Context provided using static analysis only (no LLM). '
+                   'Only signatures extracted, not full implementations.'
+        }
+    
+    def get_implementation_context(self, ctx_id: str) -> Optional[Dict]:
+        """
+        Retrieve implementation context by Context Index ID.
+        
+        This is the ONLY way to access context during implementation.
+        
+        Args:
+            ctx_id: Context index ID
+            
+        Returns:
+            Context data or None if not found
+        """
+        return self.context_curator.get_context(ctx_id)
+    
+    def slice_relevant_code(self, 
+                           file_path: str,
+                           element_names: List[str]) -> Dict[str, str]:
+        """
+        Slice specific code elements from a file.
+        
+        Returns ONLY signatures, not full implementations.
+        This enforces METHOD-0006 code slicing requirements.
+        
+        Args:
+            file_path: Path to the file
+            element_names: Names of classes/functions to extract
+            
+        Returns:
+            Dictionary mapping element names to their signatures
+        """
+        return self.context_curator.slice_code(file_path, element_names)

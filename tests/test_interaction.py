@@ -212,3 +212,92 @@ Summary of the research.
 Key takeaways from analysis.
         """)
         assert result3['evd_id'].startswith('EVD-')
+    
+    def test_prepare_implementation_context(self, optimizer):
+        """Test preparing implementation context with Context Curation Engine."""
+        result = optimizer.prepare_implementation_context(
+            task_id='TASK-001',
+            focus_areas=['PromptOptimizer', 'ResearchHarvester']
+        )
+        
+        assert result['status'] == 'context_prepared'
+        assert result['ctx_id'].startswith('CTX-')
+        assert result['task_id'] == 'TASK-001'
+        assert result['method'] == 'static_analysis'
+        assert 'PromptOptimizer' in result['focus_areas']
+        assert 'ResearchHarvester' in result['focus_areas']
+    
+    def test_get_implementation_context(self, optimizer):
+        """Test retrieving implementation context by ID."""
+        # First prepare context
+        result = optimizer.prepare_implementation_context(
+            task_id='TASK-002',
+            focus_areas=['TemplateManager']
+        )
+        ctx_id = result['ctx_id']
+        
+        # Retrieve it
+        context = optimizer.get_implementation_context(ctx_id)
+        
+        assert context is not None
+        assert context['task_id'] == 'TASK-002'
+        assert 'TemplateManager' in context['focus_areas']
+    
+    def test_slice_relevant_code(self, optimizer):
+        """Test slicing specific code elements from a file."""
+        # Create a test file
+        test_file = Path(optimizer.specs_output_dir.parent) / "test_module.py"
+        test_file.write_text("""
+class TestClass:
+    '''Test class docstring'''
+    def method_one(self):
+        pass
+    
+    def method_two(self):
+        pass
+
+def test_function():
+    '''Test function docstring'''
+    return True
+""")
+        
+        try:
+            sliced = optimizer.slice_relevant_code(
+                str(test_file),
+                ['TestClass', 'test_function']
+            )
+            
+            assert 'TestClass' in sliced
+            assert 'test_function' in sliced
+            # Should contain signatures, not full implementations
+            assert 'class TestClass' in sliced['TestClass']
+            assert 'def test_function' in sliced['test_function']
+        finally:
+            if test_file.exists():
+                test_file.unlink()
+    
+    def test_context_indexes_tracked_in_workflow(self, optimizer):
+        """Test that context indexes are tracked in workflow state."""
+        initial_count = len(optimizer.workflow_state['context_indexes'])
+        
+        optimizer.prepare_implementation_context(
+            task_id='TASK-003',
+            focus_areas=['optimizer']
+        )
+        
+        new_count = len(optimizer.workflow_state['context_indexes'])
+        assert new_count == initial_count + 1
+    
+    def test_workflow_summary_includes_context(self, optimizer):
+        """Test that workflow summary includes context information."""
+        # Prepare some context
+        optimizer.prepare_implementation_context(
+            task_id='TASK-004',
+            focus_areas=['test']
+        )
+        
+        summary = optimizer.get_workflow_summary()
+        
+        assert 'context_indexes_count' in summary
+        assert 'context_indexes' in summary
+        assert summary['context_indexes_count'] >= 1

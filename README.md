@@ -182,11 +182,12 @@ rjw --trust AUTONOMOUS
 Once in interactive mode, you can use these commands:
 
 - `/help` - Show available commands
-- `/status` - Show current session status (evidence, decisions, specs)
+- `/status` - Show current session status (evidence, decisions, specs, context indexes)
 - `/history [limit]` - Show conversation history
 - `/clear` - Clear conversation history
 - `/yolo` - Toggle YOLO mode on/off
 - `/trust <level>` - Set trust level (SUPERVISED, GUIDED, AUTONOMOUS, TRUSTED_PARTNER)
+- `/context <task_id> <focus_areas>` - Prepare implementation context (METHOD-0006)
 - `/exit` or `/quit` - Exit the CLI (or use Ctrl+D)
 
 ### One-Shot Commands
@@ -229,6 +230,31 @@ The CLI supports four trust levels from the RJW-IDD methodology:
 ### YOLO Mode
 
 YOLO mode enables automatic self-approval when checklist requirements are met, allowing faster iteration while maintaining governance.
+
+### Context Curation Engine
+
+The Context Curation Engine (METHOD-0006) is the **ONLY** source of context during implementation. It uses static analysis to:
+
+- Find related code elements without LLM inference
+- Extract signatures, not full file contents
+- Build task-specific Context Indexes (CTX-####)
+- Provide only relevant context based on focus areas
+
+**Example Usage:**
+
+```bash
+# In interactive mode
+rjw
+
+# Prepare implementation context for a task
+/context TASK-001 authentication,authorization
+
+# Context Index Created: CTX-TASK-001
+# Related Files: 5
+# Signatures Extracted: 12 (signatures only, not full implementations)
+```
+
+The context engine enforces that agents see **only** what's relevant through programmatic analysis, preventing context bloat and ensuring focused implementation.
 
 ## Using This Methodology
 
