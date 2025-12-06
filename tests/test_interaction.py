@@ -249,7 +249,7 @@ Key takeaways from analysis.
         test_file = Path(optimizer.specs_output_dir.parent) / "test_module.py"
         test_file.write_text("""
 class TestClass:
-    '''Test class docstring'''
+    \"\"\"Test class docstring\"\"\"
     def method_one(self):
         pass
     
@@ -257,7 +257,7 @@ class TestClass:
         pass
 
 def test_function():
-    '''Test function docstring'''
+    \"\"\"Test function docstring\"\"\"
     return True
 """)
         
