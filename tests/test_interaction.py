@@ -301,3 +301,43 @@ def test_function():
         assert 'context_indexes_count' in summary
         assert 'context_indexes' in summary
         assert summary['context_indexes_count'] >= 1
+    
+    def test_evaluate_context_on_turn_integration(self, optimizer):
+        """Test turn-based evaluation integration per METHOD-0006 Section 3.1."""
+        # Prepare context
+        result = optimizer.prepare_implementation_context(
+            task_id='TASK-005',
+            focus_areas=['PromptOptimizer']
+        )
+        ctx_id = result['ctx_id']
+        
+        # Perform evaluation
+        evaluation = optimizer.evaluate_context_on_turn(ctx_id)
+        
+        assert 'evaluated' in evaluation
+        assert 'removed' in evaluation
+        assert 'kept' in evaluation
+        assert evaluation['evaluated'] >= 0
+    
+    def test_update_context_on_change_integration(self, optimizer):
+        """Test context update integration per METHOD-0006 Section 4."""
+        # Prepare context
+        result = optimizer.prepare_implementation_context(
+            task_id='TASK-006',
+            focus_areas=['ResearchHarvester']
+        )
+        ctx_id = result['ctx_id']
+        
+        # Update context with decision change
+        success = optimizer.update_context_on_change(
+            ctx_id,
+            'decision',
+            'New research decision',
+            ['DEC-0001']
+        )
+        
+        assert success is True
+        
+        # Verify context was updated
+        context = optimizer.get_implementation_context(ctx_id)
+        assert 'DEC-0001' in context['decision_refs']

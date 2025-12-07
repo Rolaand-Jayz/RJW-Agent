@@ -230,3 +230,190 @@ def my_function():
         assert 'functions' in stats
         assert 'total_elements' in stats
         assert stats['total_elements'] > 0
+    
+    def test_evaluate_context_on_turn(self, curator):
+        """Test turn-based context evaluation per METHOD-0006 Section 3.1."""
+        # Create a context index with items
+        ctx_id = curator.build_context_index(
+            task_id="TASK-002",
+            focus_areas=["MyClass"]
+        )
+        
+        # Perform evaluation
+        results = curator.evaluate_context_on_turn(ctx_id)
+        
+        assert 'evaluated' in results
+        assert 'removed' in results
+        assert 'kept' in results
+        assert 'recommendations' in results
+        assert results['evaluated'] >= 0
+        
+        # Verify last_evaluated was updated
+        ctx_index = curator.context_indexes[ctx_id]
+        assert ctx_index.last_evaluated is not None
+    
+    def test_score_context_item(self, curator):
+        """Test relevance scoring per METHOD-0006 Section 3.3."""
+        # Create a context index
+        ctx_id = curator.build_context_index(
+            task_id="TASK-003",
+            focus_areas=["MyClass"]
+        )
+        
+        # Get an item to score
+        ctx_index = curator.context_indexes[ctx_id]
+        if ctx_index.context_items:
+            item_id = ctx_index.context_items[0].item_id
+            
+            # Update score
+            result = curator.score_context_item(ctx_id, item_id, 0.9)
+            assert result is True
+            
+            # Verify score was updated
+            updated_item = next(i for i in ctx_index.context_items if i.item_id == item_id)
+            assert updated_item.relevance_score == 0.9
+            assert updated_item.last_evaluated is not None
+    
+    def test_score_context_item_validation(self, curator):
+        """Test score validation (0.0-1.0 range)."""
+        ctx_id = curator.build_context_index(
+            task_id="TASK-004",
+            focus_areas=["MyClass"]
+        )
+        
+        ctx_index = curator.context_indexes[ctx_id]
+        if ctx_index.context_items:
+            item_id = ctx_index.context_items[0].item_id
+            
+            # Test invalid scores
+            assert curator.score_context_item(ctx_id, item_id, -0.1) is False
+            assert curator.score_context_item(ctx_id, item_id, 1.5) is False
+            
+            # Test valid scores
+            assert curator.score_context_item(ctx_id, item_id, 0.0) is True
+            assert curator.score_context_item(ctx_id, item_id, 1.0) is True
+    
+    def test_update_context_on_change(self, curator):
+        """Test context updates on changes per METHOD-0006 Section 4."""
+        # Create a context index
+        ctx_id = curator.build_context_index(
+            task_id="TASK-005",
+            focus_areas=["MyClass"]
+        )
+        
+        # Update on decision change
+        result = curator.update_context_on_change(
+            ctx_id,
+            'decision',
+            'New authentication decision',
+            ['DEC-0001']
+        )
+        
+        assert result is True
+        
+        # Verify change was recorded
+        ctx_index = curator.context_indexes[ctx_id]
+        assert len(ctx_index.change_history) > 0
+        assert ctx_index.change_history[0]['change_type'] == 'decision'
+        assert 'DEC-0001' in ctx_index.decision_refs
+    
+    def test_update_context_on_change_types(self, curator):
+        """Test different change types per METHOD-0006 Section 4."""
+        ctx_id = curator.build_context_index(
+            task_id="TASK-006",
+            focus_areas=["MyClass"]
+        )
+        
+        # Test spec change
+        curator.update_context_on_change(ctx_id, 'spec', 'Updated spec', ['SPEC-0001'])
+        ctx_index = curator.context_indexes[ctx_id]
+        assert 'SPEC-0001' in ctx_index.spec_refs
+        
+        # Test file change
+        curator.update_context_on_change(ctx_id, 'file', 'Modified file', ['src/new.py'])
+        assert 'src/new.py' in ctx_index.files
+        
+        # Verify change history
+        assert len(ctx_index.change_history) == 2
+    
+    def test_propagate_update(self, curator):
+        """Test update propagation per METHOD-0006 Section 4.3."""
+        # Create two context indexes referencing same decision
+        ctx_id1 = curator.build_context_index(
+            task_id="TASK-007",
+            focus_areas=["MyClass"],
+            decision_refs=['DEC-0001']
+        )
+        ctx_id2 = curator.build_context_index(
+            task_id="TASK-008",
+            focus_areas=["MyClass"],
+            decision_refs=['DEC-0001']
+        )
+        
+        # Propagate decision update
+        updated_contexts = curator.propagate_update('decision', 'DEC-0001')
+        
+        assert len(updated_contexts) == 2
+        assert ctx_id1 in updated_contexts
+        assert ctx_id2 in updated_contexts
+    
+    def test_living_documentation(self, curator):
+        """Test Living Documentation integration per METHOD-0006 Section 5."""
+        # Load living docs
+        living_docs = {
+            'technologies': {'python': '3.11+', 'framework': 'FastAPI'},
+            'architecture': {'pattern': 'Hexagonal'},
+            'conventions': {'style': 'PEP 8'}
+        }
+        curator.load_living_documentation(living_docs)
+        
+        # Retrieve by category
+        tech_docs = curator.get_living_docs_context('technologies')
+        assert tech_docs is not None
+        assert tech_docs['python'] == '3.11+'
+        
+        # Test non-existent category
+        assert curator.get_living_docs_context('nonexistent') is None
+    
+    def test_add_assumption(self, curator):
+        """Test adding assumptions per METHOD-0006 Section 2.2."""
+        ctx_id = curator.build_context_index(
+            task_id="TASK-009",
+            focus_areas=["MyClass"]
+        )
+        
+        # Add confirmed assumption
+        result = curator.add_assumption(ctx_id, "Database uses PostgreSQL", provisional=False)
+        assert result is True
+        
+        ctx_index = curator.context_indexes[ctx_id]
+        assert "Database uses PostgreSQL" in ctx_index.assumptions
+        
+        # Add provisional assumption
+        curator.add_assumption(ctx_id, "API may need rate limiting", provisional=True)
+        assert "API may need rate limiting" in ctx_index.provisional_assumptions
+    
+    def test_add_dependency(self, curator):
+        """Test adding dependencies per METHOD-0006 Section 2.2."""
+        ctx_id = curator.build_context_index(
+            task_id="TASK-010",
+            focus_areas=["MyClass"]
+        )
+        
+        # Add upstream dependency
+        result = curator.add_dependency(ctx_id, 'upstream', 'TASK-001')
+        assert result is True
+        
+        ctx_index = curator.context_indexes[ctx_id]
+        assert 'TASK-001' in ctx_index.upstream_tasks
+        
+        # Add downstream dependency
+        curator.add_dependency(ctx_id, 'downstream', 'TASK-011')
+        assert 'TASK-011' in ctx_index.downstream_tasks
+        
+        # Add parallel work
+        curator.add_dependency(ctx_id, 'parallel', 'TASK-012')
+        assert 'TASK-012' in ctx_index.parallel_work
+        
+        # Test invalid dependency type
+        assert curator.add_dependency(ctx_id, 'invalid', 'TASK-013') is False

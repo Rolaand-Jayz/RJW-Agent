@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from enum import Enum
 
 
 @dataclass
@@ -90,8 +89,8 @@ class ContextIndex:
     context_items: List[ContextItem] = field(default_factory=list)
     
     # Metadata
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    last_updated: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    last_updated: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     last_evaluated: Optional[datetime] = None
 
 
@@ -572,11 +571,43 @@ class ContextCurator:
         Returns:
             Dictionary with 'keep' boolean and 'reason'
         """
-        # Apply relevance scoring per METHOD-0006 Section 3.3
-        if item.relevance_score < 0.2:
-            return {'keep': False, 'reason': f'Low relevance score ({item.relevance_score})'}
+        reasons = []
+        keep = True
         
-        # Keep items with score >= 0.2
+        # 1. Relevance: Check relevance score per METHOD-0006 Section 3.3
+        if item.relevance_score < 0.2:
+            reasons.append(f'Low relevance score ({item.relevance_score})')
+            keep = False
+        
+        # 2. Currency: Check if context item is stale (not evaluated in 90+ days)
+        if item.last_evaluated:
+            days_since_eval = (datetime.now(timezone.utc) - item.last_evaluated).days
+            if days_since_eval > 90:
+                reasons.append(f'Stale context (last evaluated {days_since_eval} days ago)')
+                keep = False
+        
+        # 3. Completeness: Check for empty or very short content
+        if not item.content or len(item.content.strip()) < 10:
+            reasons.append('Incomplete content (too short or empty)')
+            keep = False
+        
+        # 4. Consistency: Check alignment with Living Docs if available
+        if self.living_docs:
+            # Basic consistency check: for decision/spec types, verify they're referenced
+            if item.item_type in ['decision', 'spec']:
+                item_ref = item.item_id.split('::')[-1] if '::' in item.item_id else item.item_id
+                # Check if decision/spec is in the technical context
+                if item.item_type == 'decision' and item_ref not in ctx_index.decision_refs:
+                    reasons.append(f'Decision {item_ref} not in technical context')
+                    keep = False
+                elif item.item_type == 'spec' and item_ref not in ctx_index.spec_refs:
+                    reasons.append(f'Spec {item_ref} not in technical context')
+                    keep = False
+        
+        # Return evaluation result
+        if not keep:
+            return {'keep': False, 'reason': '; '.join(reasons)}
+        
         return {'keep': True, 'reason': f'Relevant (score: {item.relevance_score})'}
     
     def score_context_item(self, 
@@ -634,9 +665,13 @@ class ContextCurator:
         ctx_index = self.context_indexes[ctx_id]
         
         # Extract focus areas from context items for backwards compatibility
-        focus_areas = list(set(item.source.split(':')[1] if ':' in item.source else '' 
-                              for item in ctx_index.context_items 
-                              if item.source.startswith('static_analysis:')))
+        focus_areas = list(set(
+            fa for fa in (
+                item.source.split(':')[1] if ':' in item.source else ''
+                for item in ctx_index.context_items
+                if item.source.startswith('static_analysis:')
+            ) if fa
+        ))
         
         return {
             'ctx_id': ctx_index.ctx_id,
