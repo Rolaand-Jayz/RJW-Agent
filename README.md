@@ -182,11 +182,12 @@ rjw --trust AUTONOMOUS
 Once in interactive mode, you can use these commands:
 
 - `/help` - Show available commands
-- `/status` - Show current session status (evidence, decisions, specs)
+- `/status` - Show current session status (evidence, decisions, specs, context indexes)
 - `/history [limit]` - Show conversation history
 - `/clear` - Clear conversation history
 - `/yolo` - Toggle YOLO mode on/off
 - `/trust <level>` - Set trust level (SUPERVISED, GUIDED, AUTONOMOUS, TRUSTED_PARTNER)
+- `/context <task_id> <focus_areas>` - Prepare implementation context (METHOD-0006)
 - `/exit` or `/quit` - Exit the CLI (or use Ctrl+D)
 
 ### One-Shot Commands
@@ -229,6 +230,52 @@ The CLI supports four trust levels from the RJW-IDD methodology:
 ### YOLO Mode
 
 YOLO mode enables automatic self-approval when checklist requirements are met, allowing faster iteration while maintaining governance.
+
+### Context Curation Engine (METHOD-0006)
+
+The Context Curation Engine implements the complete METHOD-0006 framework for context management:
+
+**Section 2: Context Index Structure**
+- Task Scope (objectives, constraints)
+- Affected Areas (files, modules, endpoints)
+- Technical Context (decisions, specs, conventions)
+- Assumptions and dependencies
+- Change history tracking
+
+**Section 3: Turn-Based Context Curation**
+- Context evaluation cycle (EVALUATE → REMOVE → LOAD → PROCEED)
+- Relevance scoring (0.0-1.0) for all context items
+- Automatic filtering of low-relevance items (score < 0.2)
+
+**Section 4: Context Update Triggers**
+- File modifications, decision/spec updates
+- Automatic propagation to affected contexts
+- Change history tracking
+
+**Section 5: Living Documentation Integration**
+- Technologies, architecture, conventions
+- Project-specific rules and constraints
+
+**Implementation Details:**
+- Uses static analysis (AST) to find related code elements
+- Extracts signatures only, not full file contents
+- No LLM inference for context selection
+
+**Example Usage:**
+
+```bash
+# In interactive mode
+rjw
+
+# Prepare implementation context for a task
+/context TASK-001 authentication,authorization
+
+# Context Index Created: CTX-TASK-001
+# Related Files: 5
+# Signatures Extracted: 12 (with relevance scores)
+```
+
+The context engine helps identify relevant code through static analysis, reducing context bloat and supporting focused implementation.
 
 ## Using This Methodology
 

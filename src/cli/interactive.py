@@ -45,11 +45,17 @@ class InteractiveREPL:
         self.session = Session(session_id)
         self.formatter = Formatter()
         
-        # Initialize RJW-IDD components
+        # Initialize RJW-IDD components with Context Curation Engine (METHOD-0006)
+        # The context engine implements the full METHOD-0006 framework:
+        # - Section 2: Complete Context Index structure
+        # - Section 3: Turn-based evaluation and relevance scoring
+        # - Section 4: Context update triggers and propagation
+        # - Section 5: Living Documentation integration
         self.optimizer = PromptOptimizer(
             research_output_dir=f".rjw-sessions/{self.session.session_id}/research",
             specs_output_dir=f".rjw-sessions/{self.session.session_id}/specs",
-            decisions_output_dir=f".rjw-sessions/{self.session.session_id}/decisions"
+            decisions_output_dir=f".rjw-sessions/{self.session.session_id}/decisions",
+            project_root="."  # Current directory for context curation
         )
         
         trust_level_enum = TrustLevel[trust_level]
@@ -72,6 +78,7 @@ class InteractiveREPL:
             '/clear': self._cmd_clear,
             '/yolo': self._cmd_yolo,
             '/trust': self._cmd_trust,
+            '/context': self._cmd_context,
             '/exit': self._cmd_exit,
             '/quit': self._cmd_exit,
         }
@@ -219,23 +226,29 @@ class InteractiveREPL:
         print()
         print(self.formatter.header("Available Commands"))
         print()
-        print(self.formatter.bold("/help") + "       - Show this help message")
-        print(self.formatter.bold("/status") + "     - Show current session status")
-        print(self.formatter.bold("/history") + "    - Show conversation history")
-        print(self.formatter.bold("/clear") + "      - Clear conversation history")
-        print(self.formatter.bold("/yolo") + "       - Toggle YOLO mode")
-        print(self.formatter.bold("/trust") + " <level> - Set trust level (SUPERVISED, GUIDED, AUTONOMOUS, TRUSTED_PARTNER)")
-        print(self.formatter.bold("/exit") + "       - Exit the CLI (also /quit or Ctrl+D)")
+        print(self.formatter.bold("/help") + "          - Show this help message")
+        print(self.formatter.bold("/status") + "        - Show current session status")
+        print(self.formatter.bold("/history") + "       - Show conversation history")
+        print(self.formatter.bold("/clear") + "         - Clear conversation history")
+        print(self.formatter.bold("/yolo") + "          - Toggle YOLO mode")
+        print(self.formatter.bold("/trust") + " <level>  - Set trust level (SUPERVISED, GUIDED, AUTONOMOUS, TRUSTED_PARTNER)")
+        print(self.formatter.bold("/context") + " <id> <areas> - Prepare implementation context (METHOD-0006)")
+        print(self.formatter.bold("/exit") + "          - Exit the CLI (also /quit or Ctrl+D)")
         print()
         print(self.formatter.section("About RJW-IDD:"))
         print("  Intelligence Driven Development - A disciplined methodology for")
         print("  AI-assisted software development with research-driven decisions.")
+        print()
+        print(self.formatter.section("Context Engine (METHOD-0006):"))
+        print("  The Context Curation Engine implements the METHOD-0006 framework for")
+        print("  context management. Use /context to prepare task-specific context indexes.")
         print()
     
     def _cmd_status(self, args: str):
         """Display session status."""
         summary = self.session.get_summary()
         governance = self.governance.get_governance_status()
+        workflow = self.optimizer.get_workflow_summary()
         
         print()
         print(self.formatter.header("Session Status"))
@@ -249,11 +262,19 @@ class InteractiveREPL:
         print(self.formatter.list_item(f"Evidence: {summary['evidence_count']}"))
         print(self.formatter.list_item(f"Decisions: {summary['decision_count']}"))
         print(self.formatter.list_item(f"Specifications: {summary['spec_count']}"))
+        print(self.formatter.list_item(f"Context Indexes: {workflow['context_indexes_count']}"))
         print()
         print(self.formatter.section("Governance:"))
         print(self.formatter.list_item(f"Trust Level: {governance['trust_level']}"))
         print(self.formatter.list_item(f"YOLO Mode: {'Enabled' if governance['yolo_mode'] else 'Disabled'}"))
         print(self.formatter.list_item(f"Approvals: {governance['approval_count']}"))
+        print()
+        print(self.formatter.section("Context Engine (METHOD-0006):"))
+        print(self.formatter.list_item(f"Context indexes created: {workflow['context_indexes_count']}"))
+        if workflow['context_indexes']:
+            print(self.formatter.dim("  Active indexes:"))
+            for ctx_id in workflow['context_indexes']:
+                print(self.formatter.dim(f"    - {ctx_id}"))
         print()
     
     def _cmd_history(self, args: str):
@@ -315,6 +336,57 @@ class InteractiveREPL:
         except KeyError:
             print(self.formatter.error(f"Invalid trust level: {args}"))
             print(self.formatter.dim("Valid levels: SUPERVISED, GUIDED, AUTONOMOUS, TRUSTED_PARTNER"))
+    
+    def _cmd_context(self, args: str):
+        """
+        Prepare implementation context using the Context Curation Engine.
+        
+        Usage: /context <task_id> <focus_areas>
+        Example: /context TASK-001 authentication,authorization
+        
+        This creates a complete Context Index (CTX-####) per METHOD-0006 Section 2.2:
+        - Task Scope (objectives, constraints)
+        - Affected Areas (files, modules, endpoints)
+        - Technical Context (decisions, specs, conventions)
+        - Assumptions and dependencies
+        - Context items with relevance scores (Section 3.3)
+        
+        Use evaluate_context_on_turn() for turn-based curation (Section 3.1).
+        """
+        if not args:
+            print(self.formatter.error("Usage: /context <task_id> <focus_areas>"))
+            print(self.formatter.dim("Example: /context TASK-001 authentication,user"))
+            return
+        
+        parts = args.split(maxsplit=1)
+        if len(parts) < 2:
+            print(self.formatter.error("Missing focus areas"))
+            print(self.formatter.dim("Usage: /context <task_id> <focus_areas>"))
+            return
+        
+        task_id = parts[0]
+        focus_areas = [area.strip() for area in parts[1].split(',')]
+        
+        try:
+            print(self.formatter.dim("\n🔍 Building context index..."))
+            result = self.optimizer.prepare_implementation_context(task_id, focus_areas)
+            
+            print()
+            print(self.formatter.success("✓ Context Index Created"))
+            print()
+            print(self.formatter.section("Context Information:"))
+            print(self.formatter.list_item(f"Context ID: {result['ctx_id']}"))
+            print(self.formatter.list_item(f"Task ID: {result['task_id']}"))
+            print(self.formatter.list_item(f"Focus Areas: {', '.join(result['focus_areas'])}"))
+            print(self.formatter.list_item(f"Related Files: {len(result['related_files'])}"))
+            print(self.formatter.list_item(f"Signatures Extracted: {result['signature_count']}"))
+            print(self.formatter.list_item(f"Method: {result['method']} (no LLM)"))
+            print()
+            print(self.formatter.dim("Note: Context engine uses static analysis to provide relevant signatures"))
+            print(self.formatter.dim("This implements the complete METHOD-0006 framework for context management"))
+            print()
+        except Exception as e:
+            print(self.formatter.error(f"Error: {str(e)}"))
     
     def _cmd_exit(self, args: str):
         """Exit the REPL."""

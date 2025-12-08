@@ -8,6 +8,7 @@ from typing import Dict, List, Optional
 from pathlib import Path
 from ..discovery.research import ResearchHarvester
 from ..utils import TemplateManager
+from ..context.engine import ContextCurator
 
 
 class PromptOptimizer:
@@ -32,7 +33,8 @@ class PromptOptimizer:
     def __init__(self, 
                  research_output_dir: str = "research/evidence",
                  specs_output_dir: str = "specs",
-                 decisions_output_dir: str = "decisions"):
+                 decisions_output_dir: str = "decisions",
+                 project_root: str = "."):
         """
         Initialize the PromptOptimizer.
         
@@ -40,9 +42,17 @@ class PromptOptimizer:
             research_output_dir: Directory for evidence files
             specs_output_dir: Directory for specification files
             decisions_output_dir: Directory for decision files
+            project_root: Root directory of project for context curation
         """
         self.research_harvester = ResearchHarvester(research_output_dir)
         self.template_manager = TemplateManager()
+        
+        # Initialize Context Curation Engine implementing METHOD-0006 framework:
+        # - Section 2: Complete Context Index structure
+        # - Section 3: Turn-based evaluation and relevance scoring
+        # - Section 4: Context update triggers and propagation
+        # - Section 5: Living Documentation integration
+        self.context_curator = ContextCurator(project_root)
         
         self.specs_output_dir = Path(specs_output_dir)
         self.decisions_output_dir = Path(decisions_output_dir)
@@ -55,7 +65,8 @@ class PromptOptimizer:
             'research_topics': [],
             'evidence_ids': [],
             'decisions': [],
-            'specifications': []
+            'specifications': [],
+            'context_indexes': []  # Track context indexes per METHOD-0006
         }
     
     def process_user_input(self, user_input: str) -> Dict:
@@ -330,7 +341,148 @@ Remember: In RJW-IDD, every decision and specification must be backed by evidenc
             'evidence_count': len(self.workflow_state['evidence_ids']),
             'decisions_count': len(self.workflow_state['decisions']),
             'specifications_count': len(self.workflow_state['specifications']),
+            'context_indexes_count': len(self.workflow_state['context_indexes']),
             'evidence_ids': self.workflow_state['evidence_ids'],
             'decision_ids': [d['id'] for d in self.workflow_state['decisions']],
-            'spec_ids': [s['id'] for s in self.workflow_state['specifications']]
+            'spec_ids': [s['id'] for s in self.workflow_state['specifications']],
+            'context_indexes': self.workflow_state['context_indexes']
         }
+    
+    def prepare_implementation_context(self, 
+                                      task_id: str,
+                                      focus_areas: List[str]) -> Dict:
+        """
+        Prepare implementation context using the Context Curation Engine (METHOD-0006).
+        
+        This method implements METHOD-0006 Context Curation Engine:
+        - Section 2: Creates complete Context Index with all required sections
+        - Section 3: Applies relevance scoring (0.0-1.0) to context items
+        - Uses static analysis to find related code elements
+        - Extracts signatures only, not full implementations
+        
+        The Context Index includes:
+        - Task Scope (objectives, constraints)
+        - Affected Areas (files, modules, endpoints)
+        - Technical Context (decisions, specs, conventions)
+        - Assumptions and dependencies
+        - Context items with relevance scores
+        
+        Args:
+            task_id: Unique identifier for the implementation task
+            focus_areas: List of code areas/modules relevant to the task
+            
+        Returns:
+            Dictionary containing:
+            - ctx_id: Context index ID
+            - related_files: List of files in scope
+            - signatures: List of relevant code signatures
+            - method: 'static_analysis' (no LLM)
+            
+        Note:
+            This returns ONLY signatures and metadata, NOT full file contents.
+            For turn-based context curation, use evaluate_context_on_turn().
+        """
+        # Build context index using static analysis (no LLM)
+        ctx_id = self.context_curator.build_context_index(task_id, focus_areas)
+        
+        # Retrieve context
+        context_data = self.context_curator.get_context(ctx_id)
+        
+        # Store in workflow state
+        self.workflow_state['context_indexes'].append(ctx_id)
+        
+        return {
+            'status': 'context_prepared',
+            'ctx_id': ctx_id,
+            'task_id': task_id,
+            'focus_areas': focus_areas,
+            'related_files': context_data['related_files'],
+            'signature_count': len(context_data['signatures']),
+            'signatures': context_data['signatures'][:10],  # Return first 10 for preview
+            'method': 'static_analysis',
+            'note': 'Context provided using static analysis only (no LLM). '
+                   'Only signatures extracted, not full implementations.'
+        }
+    
+    def get_implementation_context(self, ctx_id: str) -> Optional[Dict]:
+        """
+        Retrieve implementation context by Context Index ID.
+        
+        Returns the complete METHOD-0006 Context Index with all sections:
+        - Task Scope, Affected Areas, Technical Context
+        - Assumptions, Dependencies, Change History
+        - Context items with relevance scores
+        
+        This is the recommended way to access context during implementation.
+        
+        Args:
+            ctx_id: Context index ID
+            
+        Returns:
+            Complete Context Index data or None if not found
+        """
+        return self.context_curator.get_context(ctx_id)
+    
+    def slice_relevant_code(self, 
+                           file_path: str,
+                           element_names: List[str]) -> Dict[str, str]:
+        """
+        Slice specific code elements from a file using AST analysis.
+        
+        Returns ONLY signatures, not full implementations.
+        This uses static analysis to extract code signatures.
+        
+        Args:
+            file_path: Path to the file
+            element_names: Names of classes/functions to extract
+            
+        Returns:
+            Dictionary mapping element names to their signatures
+        """
+        return self.context_curator.slice_code(file_path, element_names)
+    
+    def evaluate_context_on_turn(self, ctx_id: str) -> Dict:
+        """
+        Perform turn-based context evaluation per METHOD-0006 Section 3.1.
+        
+        Implements the evaluation cycle:
+        1. EVALUATE - Assess current context validity
+        2. REMOVE - Drop stale or irrelevant items (score < 0.2)
+        3. LOAD - Pull missing relevant info
+        4. PROCEED - Execute with curated context
+        
+        Args:
+            ctx_id: Context Index ID to evaluate
+            
+        Returns:
+            Dictionary with evaluation results (evaluated, removed, kept counts)
+        """
+        return self.context_curator.evaluate_context_on_turn(ctx_id)
+    
+    def update_context_on_change(self, 
+                                ctx_id: str,
+                                change_type: str,
+                                description: str,
+                                affected_items: Optional[List[str]] = None) -> bool:
+        """
+        Update Context Index based on detected changes per METHOD-0006 Section 4.
+        
+        Implements context update triggers for:
+        - File added/modified
+        - Decision created/updated (DEC-####)
+        - Spec updated (SPEC-####)
+        - API change
+        - Dependency change
+        
+        Args:
+            ctx_id: Context Index ID
+            change_type: Type of change ('file', 'decision', 'spec', 'api', 'dependency')
+            description: Description of the change
+            affected_items: Optional list of affected items
+            
+        Returns:
+            True if update successful
+        """
+        return self.context_curator.update_context_on_change(
+            ctx_id, change_type, description, affected_items
+        )
